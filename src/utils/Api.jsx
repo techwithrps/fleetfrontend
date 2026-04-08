@@ -1,9 +1,16 @@
 import axios from "axios";
 
-// Use environment variable with fallback to localhost
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "");
+// Helper to safely construct base URL
+const getBaseUrl = () => {
+  const envUrl = process.env.REACT_APP_API_URL;
+  if (envUrl) {
+    // Automatically append /api if missing to prevent 404 errors
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
+  }
+  return process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "";
+};
+
+const API_BASE_URL = getBaseUrl();
 
 console.log("API_BASE_URL used by axios:", API_BASE_URL);
 
