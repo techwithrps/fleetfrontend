@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.gr-button {
+  @apply text-green-600 hover:text-green-900 flex items-center ml-2;
+}
