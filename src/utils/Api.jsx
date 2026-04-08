@@ -2,7 +2,8 @@ import axios from "axios";
 
 // Use environment variable with fallback to localhost
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:4000/api";
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "");
 
 console.log("API_BASE_URL used by axios:", API_BASE_URL);
 
@@ -10,7 +11,6 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "69420",
   },
 });
 

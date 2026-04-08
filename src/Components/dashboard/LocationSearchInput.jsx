@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "");
+
 const LocationSearchInput = ({
   value,
   onChange,
@@ -31,9 +35,7 @@ const LocationSearchInput = ({
       return;
     }
     try {
-      const response = await fetch(
-        "https://running-backendelogisol.onrender.com/api/locations"
-      );
+      const response = await fetch(`${API_BASE_URL}/locations`);
       const data = await response.json();
       const filteredLocations = data.filter((location) =>
         location.LOCATION_NAME?.toLowerCase().includes(searchText.toLowerCase())

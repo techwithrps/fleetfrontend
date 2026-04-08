@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../utils/Api";
 import {
   DollarSign,
   TrendingUp,
@@ -44,42 +45,22 @@ const AllReportsPage = () => {
 
     try {
       // Fetch all transactions
-      const transactionsResponse = await fetch(
-        "http://localhost:4000/api/transactions/all",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const transactionsResponse = await api.get("/transactions/all");
+      const transactionsData = transactionsResponse.data;
 
-      if (!transactionsResponse.ok) {
+      if (!transactionsData?.success) {
         throw new Error(
-          `Failed to fetch transactions: ${transactionsResponse.status}`
-        );
-      }
-
-      const transactionsData = await transactionsResponse.json();
-
-      if (!transactionsData.success) {
-        throw new Error(
-          transactionsData.message || "Failed to fetch transactions"
+          transactionsData?.message || "Failed to fetch transactions"
         );
       }
 
       // Fetch all transport requests
-      const requestsResponse = await fetch(
-        "http://localhost:4000/api/transport-requests/all",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
       let requestsData = { data: [] };
-      if (requestsResponse.ok) {
-        requestsData = await requestsResponse.json();
+      try {
+        const requestsResponse = await api.get("/transport-requests/all");
+        requestsData = requestsResponse.data || { data: [] };
+      } catch (requestError) {
+        console.warn("Failed to fetch transport requests:", requestError);
       }
 
       setAllTransactions(transactionsData.data || []);
