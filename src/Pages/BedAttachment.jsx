@@ -6,6 +6,7 @@ const BedAttachment = () => {
   const [equipment, setEquipment] = useState([]);
   const [beds, setBeds] = useState([]);
   const [attachments, setAttachments] = useState([]);
+  const [activeBedIds, setActiveBedIds] = useState(new Set());
   const [selectedEquipmentId, setSelectedEquipmentId] = useState("");
   const [selectedBedId, setSelectedBedId] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -22,6 +23,24 @@ const BedAttachment = () => {
 
   const formatDateTime = (value) =>
     value ? new Date(value).toLocaleString() : "N/A";
+
+  const loadActiveBedUsage = async () => {
+    try {
+      const response = await bedAttachmentAPI.getHistory();
+      if (!response.success) return;
+
+      const active = new Set(
+        (response.data || [])
+          .filter(
+            (row) => String(row.ATTACH_STATUS || "").toUpperCase() !== "DETACHED"
+          )
+          .map((row) => String(row.BED_ID))
+      );
+      setActiveBedIds(active);
+    } catch (error) {
+      console.error("Failed to load active bed usage:", error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -60,6 +79,7 @@ const BedAttachment = () => {
 
   useEffect(() => {
     loadData();
+    loadActiveBedUsage();
   }, []);
 
   useEffect(() => {
@@ -82,6 +102,7 @@ const BedAttachment = () => {
         setSelectedBedId("");
         setRemarks("");
         loadAttachments(selectedEquipmentId);
+        loadActiveBedUsage();
       } else {
         toast.error(response.error || "Failed to attach bed");
       }
@@ -99,6 +120,7 @@ const BedAttachment = () => {
         toast.success("Bed detached successfully");
         setRemarks("");
         loadAttachments(selectedEquipmentId);
+        loadActiveBedUsage();
       } else {
         toast.error(response.error || "Failed to detach bed");
       }
@@ -140,11 +162,13 @@ const BedAttachment = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
               <option value="">Select bed</option>
-              {beds.map((bed) => (
+              {beds
+                .filter((bed) => !activeBedIds.has(String(bed.BED_ID)))
+                .map((bed) => (
                 <option key={bed.BED_ID} value={bed.BED_ID}>
                   {bed.BED_NO}
                 </option>
-              ))}
+                ))}
             </select>
           </div>
           <div className="md:col-span-1">

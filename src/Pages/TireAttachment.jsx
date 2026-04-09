@@ -15,6 +15,7 @@ const TireAttachment = () => {
   const [tires, setTires] = useState([]);
   const [positions, setPositions] = useState([]);
   const [attachments, setAttachments] = useState([]);
+  const [activeTireIds, setActiveTireIds] = useState(new Set());
 
   const [equipmentId, setEquipmentId] = useState("");
   const [bedId, setBedId] = useState("");
@@ -44,6 +45,24 @@ const TireAttachment = () => {
 
   const formatDateTime = (value) =>
     value ? new Date(value).toLocaleString() : "N/A";
+
+  const loadActiveTireUsage = async () => {
+    try {
+      const response = await tireAttachmentAPI.getHistory();
+      if (!response.success) return;
+
+      const active = new Set(
+        (response.data || [])
+          .filter(
+            (row) => String(row.ATTACH_STATUS || "").toUpperCase() !== "DETACHED"
+          )
+          .map((row) => String(row.TIRE_ID))
+      );
+      setActiveTireIds(active);
+    } catch (error) {
+      console.error("Failed to load active tire usage:", error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -81,6 +100,7 @@ const TireAttachment = () => {
 
   useEffect(() => {
     loadData();
+    loadActiveTireUsage();
   }, []);
 
   useEffect(() => {
@@ -115,6 +135,7 @@ const TireAttachment = () => {
         setPositionId("");
         setRemarks("");
         loadAttachments();
+        loadActiveTireUsage();
       } else {
         toast.error(response.error || "Failed to attach tire");
       }
@@ -132,6 +153,7 @@ const TireAttachment = () => {
         toast.success("Tire detached successfully");
         setRemarks("");
         loadAttachments();
+        loadActiveTireUsage();
       } else {
         toast.error(response.error || "Failed to detach tire");
       }
@@ -227,11 +249,13 @@ const TireAttachment = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
               <option value="">Select tire</option>
-              {tires.map((tire) => (
+              {tires
+                .filter((tire) => !activeTireIds.has(String(tire.TIRE_ID)))
+                .map((tire) => (
                 <option key={tire.TIRE_ID} value={tire.TIRE_ID}>
                   {tire.TIRE_NO}
                 </option>
-              ))}
+                ))}
             </select>
           </div>
           <div className="md:col-span-2">
