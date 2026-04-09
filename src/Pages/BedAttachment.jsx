@@ -24,6 +24,10 @@ const BedAttachment = () => {
   const formatDateTime = (value) =>
     value ? new Date(value).toLocaleString() : "N/A";
 
+  const hasActiveBedOnSelectedVehicle = attachments.some(
+    (row) => String(row.ATTACH_STATUS || "").toUpperCase() !== "DETACHED"
+  );
+
   const loadActiveBedUsage = async () => {
     try {
       const response = await bedAttachmentAPI.getHistory();
@@ -159,9 +163,14 @@ const BedAttachment = () => {
             <select
               value={selectedBedId}
               onChange={(e) => setSelectedBedId(e.target.value)}
+              disabled={hasActiveBedOnSelectedVehicle}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value="">Select bed</option>
+              <option value="">
+                {hasActiveBedOnSelectedVehicle
+                  ? "Vehicle already has active bed"
+                  : "Select bed"}
+              </option>
               {beds
                 .filter((bed) => !activeBedIds.has(String(bed.BED_ID)))
                 .map((bed) => (
@@ -186,6 +195,7 @@ const BedAttachment = () => {
         <div className="mt-4">
           <button
             onClick={handleAttach}
+            disabled={hasActiveBedOnSelectedVehicle}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Attach

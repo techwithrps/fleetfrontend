@@ -2,6 +2,24 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { tirePositionAPI } from "../utils/Api";
 
+const POSITION_NAME_OPTIONS = [
+  "F1 OUT",
+  "LEFT I",
+  "LEFT I INNER",
+  "LEFT I OUTER",
+  "LEFT II",
+  "LEFT II INNER",
+  "LEFT II OUTER",
+  "LEFT III",
+  "LEFT III INNER",
+  "LEFT III OUTER",
+  "LEFT IV INNER",
+  "LEFT IV OUTER",
+  "LEFT V INNER",
+  "LEFT V OUTER",
+  "RIGHT I",
+];
+
 const TirePositionMaster = () => {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -241,14 +259,20 @@ const TirePositionMaster = () => {
                     <label className="block text-sm font-medium text-gray-700">
                       Position Name *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="position_name"
                       value={formData.position_name}
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-                    />
+                    >
+                      <option value="">Select position name</option>
+                      {POSITION_NAME_OPTIONS.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">

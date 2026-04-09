@@ -16,6 +16,7 @@ const TireAttachment = () => {
   const [positions, setPositions] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [activeTireIds, setActiveTireIds] = useState(new Set());
+  const [activeAttachmentRows, setActiveAttachmentRows] = useState([]);
 
   const [equipmentId, setEquipmentId] = useState("");
   const [bedId, setBedId] = useState("");
@@ -59,10 +60,36 @@ const TireAttachment = () => {
           .map((row) => String(row.TIRE_ID))
       );
       setActiveTireIds(active);
+      setActiveAttachmentRows(
+        (response.data || []).filter(
+          (row) => String(row.ATTACH_STATUS || "").toUpperCase() !== "DETACHED"
+        )
+      );
     } catch (error) {
       console.error("Failed to load active tire usage:", error);
     }
   };
+
+  const occupiedPositionIds = new Set(
+    activeAttachmentRows
+      .filter((row) => {
+        if (attachFor === "VEHICLE") {
+          return (
+            String(row.ATTACH_FOR || "").toUpperCase() === "VEHICLE" &&
+            String(row.EQUIPMENT_ID) === String(equipmentId)
+          );
+        }
+        return (
+          String(row.ATTACH_FOR || "").toUpperCase() === "BED" &&
+          String(row.BED_ID) === String(bedId)
+        );
+      })
+      .map((row) => String(row.POSITION_ID))
+  );
+
+  const availablePositions = positions.filter(
+    (pos) => !occupiedPositionIds.has(String(pos.POSITION_ID))
+  );
 
   const loadData = async () => {
     try {
@@ -231,8 +258,12 @@ const TireAttachment = () => {
               onChange={(e) => setPositionId(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value="">Select position</option>
-              {positions.map((pos) => (
+              <option value="">
+                {availablePositions.length === 0
+                  ? "No position available"
+                  : "Select position"}
+              </option>
+              {availablePositions.map((pos) => (
                 <option key={pos.POSITION_ID} value={pos.POSITION_ID}>
                   {pos.POSITION_CODE} - {pos.POSITION_NAME}
                 </option>
@@ -273,6 +304,11 @@ const TireAttachment = () => {
         <div className="mt-4">
           <button
             onClick={handleAttach}
+            disabled={
+              (attachFor === "VEHICLE" && !equipmentId) ||
+              (attachFor === "BED" && !bedId) ||
+              availablePositions.length === 0
+            }
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Attach
