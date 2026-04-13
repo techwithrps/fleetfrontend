@@ -3,6 +3,15 @@ import { toast } from "react-toastify";
 import { equipmentAPI, vendorAPI } from "../utils/Api";
 
 const EquipmentDetails = () => {
+  const getErrorMessage = (error, fallback) => {
+    if (!error) return fallback;
+    if (typeof error === "string") return error;
+    if (error?.error) return error.error;
+    if (error?.response?.data?.error) return error.response.data.error;
+    if (error?.message) return error.message;
+    return fallback;
+  };
+
   const [equipment, setEquipment] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +60,7 @@ const EquipmentDetails = () => {
     VENDER_ID: ""
   });
 
-  // Fetch all equipment
+  // Fetch all vehicles
   const fetchEquipment = async () => {
     setLoading(true);
     try {
@@ -59,11 +68,11 @@ const EquipmentDetails = () => {
       if (response.success) {
         setEquipment(response.data);
       } else {
-        toast.error("Failed to fetch equipment");
+        toast.error("Failed to fetch vehicles");
       }
     } catch (error) {
-      console.error("Error fetching equipment:", error);
-      toast.error(error.message || "Failed to fetch equipment");
+      console.error("Error fetching vehicles:", error);
+      toast.error(getErrorMessage(error, "Failed to fetch vehicles"));
     } finally {
       setLoading(false);
     }
@@ -84,7 +93,7 @@ const EquipmentDetails = () => {
     }
   };
 
-  // Fetch equipment and vendors on component mount
+  // Fetch vehicles and vendors on component mount
   useEffect(() => {
     fetchEquipment();
     fetchVendors();
@@ -167,7 +176,7 @@ const EquipmentDetails = () => {
     }
   };
 
-  // Handle equipment selection
+  // Handle vehicle selection
   const handleSelectEquipment = (equip) => {
     setSelectedEquipment(equip);
     setFormData({
@@ -214,7 +223,7 @@ const EquipmentDetails = () => {
     setIsEditing(false);
   };
 
-  // Handle form submission for creating/updating equipment
+  // Handle form submission for creating/updating vehicles
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -235,37 +244,37 @@ const EquipmentDetails = () => {
 
     try {
       if (isEditing && selectedEquipment) {
-        // Update existing equipment
+        // Update existing vehicle
         const response = await equipmentAPI.updateEquipment(selectedEquipment.EQUIPMENT_ID, data);
         if (response.success) {
           toast.success("Vehicle updated successfully");
           fetchEquipment();
           setIsEditing(false);
         } else {
-          toast.error(response.error || "Failed to update equipment");
+          toast.error(response.error || "Failed to update vehicle");
         }
       } else {
-        // Create new equipment
+        // Create new vehicle
         const response = await equipmentAPI.createEquipment(data);
         if (response.success) {
           toast.success("Vehicle created successfully");
           fetchEquipment();
           resetForm();
         } else {
-          toast.error(response.error || "Failed to create equipment");
+          toast.error(response.error || "Failed to create vehicle");
         }
       }
     } catch (error) {
-      console.error("Error saving equipment:", error);
-      toast.error(error.response?.data?.error || error.message || "Failed to save equipment");
+      console.error("Error saving vehicle:", error);
+      toast.error(getErrorMessage(error, "Failed to save vehicle"));
     }
   };
 
-  // Handle delete equipment
+  // Handle delete vehicle
   const handleDeleteEquipment = async () => {
     if (!selectedEquipment) return;
 
-    if (window.confirm("Are you sure you want to delete this equipment?")) {
+    if (window.confirm("Are you sure you want to delete this vehicle?")) {
       try {
         const response = await equipmentAPI.deleteEquipment(selectedEquipment.EQUIPMENT_ID);
         if (response.success) {
@@ -273,11 +282,11 @@ const EquipmentDetails = () => {
           fetchEquipment();
           resetForm();
         } else {
-          toast.error(response.error || "Failed to delete equipment");
+          toast.error(response.error || "Failed to delete vehicle");
         }
       } catch (error) {
-        console.error("Error deleting equipment:", error);
-        toast.error(error.response?.data?.error || error.message || "Failed to delete equipment");
+        console.error("Error deleting vehicle:", error);
+        toast.error(getErrorMessage(error, "Failed to delete vehicle"));
       }
     }
   };
