@@ -97,30 +97,53 @@ const VendorManagement = () => {
   const totalPages = Math.ceil(filteredVendors.length / itemsPerPage);
 
   // Form validation
+  const getVendorFieldError = (name, value) => {
+    if (!value) return "";
+    const validators = {
+      email_id1: () => (/\S+@\S+\.\S+/.test(value) ? "" : "Invalid email format"),
+      email_id2: () => (/\S+@\S+\.\S+/.test(value) ? "" : "Invalid email format"),
+      pin_code: () => (/^\d{6}$/.test(value) ? "" : "Pin code must be 6 digits"),
+      pan: () =>
+        /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value)
+          ? ""
+          : "Invalid PAN format (e.g., ABCDE1234F)",
+      tan: () =>
+        /^[A-Z]{4}[0-9]{5}[A-Z]{1}$/.test(value)
+          ? ""
+          : "Invalid TAN format (e.g., LKOA12345B)",
+      gstin: () =>
+        /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$/.test(value)
+          ? ""
+          : "Invalid GSTIN format",
+      ifsc: () =>
+        /^[A-Z]{4}0[A-Z0-9]{6}$/.test(value)
+          ? ""
+          : "Invalid IFSC format (e.g., HDFC0001234)",
+      mobile_no: () =>
+        /^[6-9]\d{9}$/.test(value) ? "" : "Invalid 10-digit mobile number",
+      contact_no: () => (/^\d{10}$/.test(value) ? "" : "Contact number must be 10 digits"),
+    };
+    return validators[name] ? validators[name]() : "";
+  };
+
   const validateForm = () => {
     const errors = {};
     if (!formData.vendor_name.trim())
       errors.vendor_name = "Vendor name is required";
-    if (formData.email_id1 && !/\S+@\S+\.\S+/.test(formData.email_id1)) {
-      errors.email_id1 = "Invalid email format";
-    }
-    if (formData.email_id2 && !/\S+@\S+\.\S+/.test(formData.email_id2)) {
-      errors.email_id2 = "Invalid email format";
-    }
-    if (formData.pin_code && !/^\d{6}$/.test(formData.pin_code)) {
-      errors.pin_code = "Pin code must be 6 digits";
-    }
-    if (formData.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan)) {
-      errors.pan = "Invalid PAN format";
-    }
-    if (
-      formData.gstin &&
-      !/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$/.test(
-        formData.gstin
-      )
-    ) {
-      errors.gstin = "Invalid GSTIN format";
-    }
+    [
+      "email_id1",
+      "email_id2",
+      "pin_code",
+      "pan",
+      "tan",
+      "gstin",
+      "ifsc",
+      "mobile_no",
+      "contact_no",
+    ].forEach((field) => {
+      const msg = getVendorFieldError(field, formData[field]);
+      if (msg) errors[field] = msg;
+    });
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -128,9 +151,33 @@ const VendorManagement = () => {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let nextValue = value;
+
+    if (["pan", "tan", "gstin", "ifsc", "vendor_code", "state_code"].includes(name)) {
+      nextValue = value.toUpperCase().trimStart();
+    } else if (["email_id1", "email_id2"].includes(name)) {
+      nextValue = value.toLowerCase().trimStart();
+    } else if (["contact_no", "mobile_no", "pin_code"].includes(name)) {
+      const digits = value.replace(/\D/g, "");
+      nextValue = name === "pin_code" ? digits.slice(0, 6) : digits.slice(0, 10);
+    }
+
+    setFormData({ ...formData, [name]: nextValue });
     if (validationErrors[name]) {
       setValidationErrors({ ...validationErrors, [name]: "" });
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    if (!name) return;
+    const message = getVendorFieldError(name, value);
+    e.target.setCustomValidity(message);
+    if (message) {
+      e.target.reportValidity();
+      setValidationErrors((prev) => ({ ...prev, [name]: message }));
+    } else if (validationErrors[name]) {
+      setValidationErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -501,7 +548,7 @@ const VendorManagement = () => {
             </div>
 
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} onBlurCapture={handleFieldBlur}>
                 <div className="bg-white px-6 py-4 border-b">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium text-gray-900">
@@ -558,21 +605,16 @@ const VendorManagement = () => {
                             name="vendor_code"
                             value={formData.vendor_code}
                             onChange={handleInputChange}
+                            placeholder="e.g., VND001"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Terminal ID
-                          </label>
-                          <input
-                            type="number"
-                            name="terminal_id"
-                            value={formData.terminal_id}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
+                        <input
+                          type="hidden"
+                          name="terminal_id"
+                          value={formData.terminal_id}
+                          onChange={handleInputChange}
+                        />
                       </div>
                     </div>
 
@@ -592,6 +634,7 @@ const VendorManagement = () => {
                             name="email_id1"
                             value={formData.email_id1}
                             onChange={handleInputChange}
+                            placeholder="e.g., contact@vendor.com"
                             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               validationErrors.email_id1
                                 ? "border-red-300"
@@ -613,6 +656,7 @@ const VendorManagement = () => {
                             name="email_id2"
                             value={formData.email_id2}
                             onChange={handleInputChange}
+                            placeholder="e.g., billing@vendor.com"
                             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               validationErrors.email_id2
                                 ? "border-red-300"
@@ -634,8 +678,18 @@ const VendorManagement = () => {
                             name="contact_no"
                             value={formData.contact_no}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="10-digit, e.g., 9876543210"
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono ${
+                              validationErrors.contact_no
+                                ? "border-red-300"
+                                : "border-gray-300"
+                            }`}
                           />
+                          {validationErrors.contact_no && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {validationErrors.contact_no}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -646,8 +700,18 @@ const VendorManagement = () => {
                             name="mobile_no"
                             value={formData.mobile_no}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="10-digit, e.g., 9876543210"
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono ${
+                              validationErrors.mobile_no
+                                ? "border-red-300"
+                                : "border-gray-300"
+                            }`}
                           />
+                          {validationErrors.mobile_no && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {validationErrors.mobile_no}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -704,6 +768,7 @@ const VendorManagement = () => {
                             name="pin_code"
                             value={formData.pin_code}
                             onChange={handleInputChange}
+                            placeholder="e.g., 208001"
                             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                               validationErrors.pin_code
                                 ? "border-red-300"
@@ -725,6 +790,7 @@ const VendorManagement = () => {
                             name="state_code"
                             value={formData.state_code}
                             onChange={handleInputChange}
+                            placeholder="e.g., UP"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -759,8 +825,9 @@ const VendorManagement = () => {
                             name="pan"
                             value={formData.pan}
                             onChange={handleInputChange}
-                            placeholder="ABCDE1234F"
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            onBlur={handleFieldBlur}
+                            placeholder="AAAAA0000A"
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono ${
                               validationErrors.pan
                                 ? "border-red-300"
                                 : "border-gray-300"
@@ -781,8 +848,18 @@ const VendorManagement = () => {
                             name="tan"
                             value={formData.tan}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="e.g., LKOA12345B"
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono ${
+                              validationErrors.tan
+                                ? "border-red-300"
+                                : "border-gray-300"
+                            }`}
                           />
+                          {validationErrors.tan && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {validationErrors.tan}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -851,8 +928,19 @@ const VendorManagement = () => {
                             name="ifsc"
                             value={formData.ifsc}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            onBlur={handleFieldBlur}
+                            placeholder="AAAA0AAAAAA"
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono ${
+                              validationErrors.ifsc
+                                ? "border-red-300"
+                                : "border-gray-300"
+                            }`}
                           />
+                          {validationErrors.ifsc && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {validationErrors.ifsc}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">

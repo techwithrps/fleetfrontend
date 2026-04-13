@@ -81,7 +81,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        await checkUserSession();
+        const hasSession = await checkUserSession();
+        if (hasSession) {
+          const isValid = await authAPI.checkSession();
+          if (!isValid) {
+            setUser(null);
+          }
+        }
       } catch (error) {
         console.error("Error initializing auth:", error);
         clearAuthData();
@@ -101,12 +107,12 @@ export const AuthProvider = ({ children }) => {
         try {
           const isValid = await authAPI.checkSession();
           if (!isValid) {
-            console.log("Session validation failed, but not logging out automatically");
-            // Don't call handleAuthError to prevent automatic logout
+            setUser(null);
           }
         } catch (error) {
           console.error("Error validating token:", error);
-          // Don't log out on validation errors
+          clearAuthData();
+          setUser(null);
         }
       }
     };
@@ -163,29 +169,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (userData) => {
-    try {
-      setLoading(true);
-      const response = await authAPI.signup(userData);
-      toast.success("Account created successfully! Please log in.");
-      return response;
-    } catch (error) {
-      toast.error(error.message || "Signup failed. Please try again.");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const value = {
     user,
     login,
-    signup,
     logout,
     loading,
     handleAuthError,
     checkUserSession,
     isTokenExpired,
+    updateUser: (newData) => {
+      const updatedUser = { ...user, ...newData };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

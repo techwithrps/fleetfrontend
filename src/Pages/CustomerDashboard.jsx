@@ -6,12 +6,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Clock,
-  Bell,
   Search,
   User,
-  LogOut,
-  Settings,
-  Menu,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -36,10 +32,6 @@ export default function CustomerDashboard({
 }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const [expiryAlerts, setExpiryAlerts] = useState({
     days: 10,
     vehicleExpiries: [],
@@ -216,21 +208,6 @@ export default function CustomerDashboard({
     setIsFiltered(false);
     setCurrentPage(1);
     // fetchRequests will be called by the useEffect
-  };
-
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-    if (showUserMenu) setShowUserMenu(false);
-  };
-
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
-    if (showNotifications) setShowNotifications(false);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   const handleSubmit = async (e) => {
@@ -485,7 +462,7 @@ export default function CustomerDashboard({
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 -m-6 p-6 font-inter">
       <ToastContainer
         position="top-right"
         autoClose={2000}
@@ -497,88 +474,20 @@ export default function CustomerDashboard({
         draggable
         pauseOnHover
       />
-      <header className="bg-white shadow-sm flex items-center justify-between p-4">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={toggleMobileMenu}
-            className="text-gray-600 md:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button
-              onClick={toggleNotifications}
-              className="relative text-gray-600 hover:text-gray-800"
-            >
-              <Bell className="h-6 w-6" />
-              <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50">
-                <div className="p-3 border-b">
-                  <h3 className="font-medium">Notifications</h3>
-                </div>
-                <div className="p-4 text-sm text-gray-500">
-                  No new notifications
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="relative">
-            <button
-              onClick={toggleUserMenu}
-              className="flex items-center text-gray-700 focus:outline-none"
-            >
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                {user?.name?.charAt(0) || <User className="h-5 w-5" />}
-              </div>
-              <span className="ml-2 hidden md:block">
-                {user?.name || "User"}
-              </span>
-              <ChevronDown className="h-4 w-4 ml-1" />
-            </button>
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
-                <div className="py-2 px-4 border-b">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-                <div className="py-1">
-                  <button className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left flex items-center">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </button>
-                  <button className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left flex items-center">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left flex items-center"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-      <main className="flex-1 overflow-auto bg-gray-50 p-6">
+
+      <main className="flex-1 overflow-auto rounded-2xl">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Welcome back, {user?.name || "Customer"}! Request services and
-              manage your shipments
+          <div className="mb-8">
+            <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Dashboard Overview</h2>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              Welcome back, <span className="text-blue-600">{user?.name || "Customer"}</span>! Request services and manage your shipments efficiently.
             </p>
           </div>
           <StatsCards />
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3 bg-white rounded-lg shadow">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-3 bg-white rounded-2xl shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+              <div className="p-1 border-b border-indigo-50/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50"></div>
               <ServiceRequestForm
                 requestData={requestData}
                 setRequestData={setRequestData}
@@ -596,312 +505,243 @@ export default function CustomerDashboard({
               />
             </div>
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    Expiry Alerts (Next {expiryAlerts.days || 10} Days)
+              <div className="bg-white p-5 rounded-2xl shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-rose-400 to-orange-400"></div>
+                <div className="ml-2">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4 shrink-0">
+                    Expiry Alerts
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Next {expiryAlerts.days || 10} Days</span>
                   </h3>
-                </div>
-                <div className="p-4 space-y-4">
+                  
                   {expiryLoading ? (
-                    <div className="flex items-center justify-center py-6">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-rose-500"></div>
                     </div>
                   ) : (
-                    <>
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-500">Vehicles</p>
+                    <div className="space-y-4">
+                      {/* Vehicles */}
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Vehicles Alerts</p>
                         {expiryAlerts.vehicleExpiries?.length ? (
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                             {expiryAlerts.vehicleExpiries.slice(0, 6).map((item, idx) => (
                               <div
                                 key={`${item.EQUIPMENT_ID}-${item.EXPIRY_TYPE}-${idx}`}
-                                className="text-xs text-gray-700 border rounded-md p-2"
+                                className="group flex flex-col gap-1 text-[11px] bg-rose-50/50 border border-rose-100/50 p-2 rounded-xl hover:bg-rose-50 hover:border-rose-100 transition-all"
                               >
-                                <div className="font-medium">
+                                <div className="font-bold text-rose-900 flex items-center justify-between">
                                   {item.EQUIPMENT_NO || "Vehicle"}
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
                                 </div>
-                                <div className="text-gray-500">
-                                  {formatExpiryLabel(item.EXPIRY_TYPE)} •{" "}
-                                  {formatExpiryDate(item.EXPIRY_DATE)}
+                                <div className="text-rose-600 font-medium">
+                                  {formatExpiryLabel(item.EXPIRY_TYPE)} • {formatExpiryDate(item.EXPIRY_DATE)}
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-500">
-                            No vehicle expiries in this window.
-                          </p>
+                          <div className="text-[11px] text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
+                            No vehicle expiries found.
+                          </div>
                         )}
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-500">Drivers</p>
+
+                      {/* Drivers */}
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Driver Alerts</p>
                         {expiryAlerts.driverExpiries?.length ? (
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                             {expiryAlerts.driverExpiries.slice(0, 6).map((item, idx) => (
                               <div
                                 key={`${item.DRIVER_ID}-${idx}`}
-                                className="text-xs text-gray-700 border rounded-md p-2"
+                                className="group flex flex-col gap-1 text-[11px] bg-amber-50/50 border border-amber-100/50 p-2 rounded-xl hover:bg-amber-50 hover:border-amber-100 transition-all"
                               >
-                                <div className="font-medium">
+                                <div className="font-bold text-amber-900 flex items-center justify-between">
                                   {item.DRIVER_NAME || "Driver"}
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                                 </div>
-                                <div className="text-gray-500">
+                                <div className="text-amber-600 font-medium">
                                   License • {formatExpiryDate(item.EXPIRY_DATE)}
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-500">
-                            No driver expiries in this window.
-                          </p>
+                          <div className="text-[11px] text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
+                            No driver expiries found.
+                          </div>
                         )}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow h-fit">
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    Recent Requests
-                  </h3>
-                  <div className="mt-2 space-y-2">
-                    <div className="relative">
+              <div className="bg-white rounded-2xl shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border border-slate-100 relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+                
+                {/* Search Header */}
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                       <Search className="w-4 h-4 text-blue-600" />
+                       Track Activity
+                    </h3>
+                    <button
+                      onClick={refreshData}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-slate-200"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Request / SHIPA</label>
                       <input
                         type="text"
-                        value={requestId}
-                        onChange={(e) => setRequestId(e.target.value)}
-                        placeholder="Search by Request ID"
-                        className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                        value={requestId || shipaNo}
+                        onChange={(e) => {
+                          setRequestId(e.target.value);
+                          setShipaNo(e.target.value);
+                        }}
+                        placeholder="Search ID or SHIPA..."
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                       />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <Search className="h-4 w-4 text-gray-400" />
-                      </div>
                     </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={shipaNo}
-                        onChange={(e) => setShipaNo(e.target.value)}
-                        placeholder="Search by SHIPA No"
-                        className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <Search className="h-4 w-4 text-gray-400" />
-                      </div>
-                    </div>
-                    <div className="relative">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Container</label>
                       <input
                         type="text"
                         value={containerNo}
                         onChange={(e) => setContainerNo(e.target.value)}
-                        placeholder="Search by Container No"
-                        className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Container No..."
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                       />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <Search className="h-4 w-4 text-gray-400" />
-                      </div>
                     </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={consigner}
-                        onChange={(e) => setConsigner(e.target.value)}
-                        placeholder="Search by Consigner"
-                        className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <Search className="h-4 w-4 text-gray-400" />
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={handleSearch}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        disabled={loading}
-                      >
-                        <Search className="h-5 w-5 mr-2" />
-                        {loading ? "Searching..." : "Search"}
-                      </button>
-                      <button
-                        onClick={refreshData}
-                        className="p-2 text-gray-600 hover:text-gray-800"
-                        title="Refresh"
-                      >
-                        <RefreshCw className="h-5 w-5" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleSearch}
+                      className="w-full py-2.5 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition-all shadow-sm flex items-center justify-center gap-2 mt-1 active:scale-[0.98]"
+                      disabled={loading}
+                    >
+                      {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                      Search Requests
+                    </button>
                   </div>
                 </div>
-                <div className="p-4">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {pastRequests.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <p className="text-sm">
-                            {isFiltered
-                              ? "No requests found matching your criteria"
-                              : "No requests found"}
-                          </p>
-                        </div>
-                      ) : (
-                        pastRequests.map((request) => (
-                          <div
-                            key={request.id}
-                            onClick={() => handleRequestClick(request)}
-                            className={`border rounded-lg p-3 transition-all duration-200 ${
-                              canEditRequest(request.status)
-                                ? "cursor-pointer hover:border-blue-300 hover:shadow-sm"
-                                : "cursor-not-allowed opacity-60"
-                            }`}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  Booking #{request.id}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {new Date(
-                                    request.created_at
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="flex items-center space-x-1 ml-2">
-                                {getStatusBadge(request.status)}
-                                {request.status === "approved" && (
+
+                {/* Results Area */}
+                <div className="flex-1 bg-white overflow-hidden flex flex-col min-h-0">
+                  <div className="p-4 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar">
+                    {loading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pastRequests.length === 0 ? (
+                          <div className="text-center py-12 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200">
+                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                               <Search className="w-5 h-5 text-slate-300" />
+                            </div>
+                            <p className="text-xs font-semibold text-slate-400">
+                              {isFiltered ? "No matching requests found" : "Your shipment history is empty"}
+                            </p>
+                          </div>
+                        ) : (
+                          pastRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              onClick={() => handleRequestClick(request)}
+                              className={`group relative bg-white border border-slate-100 rounded-2xl p-4 transition-all duration-300 ${
+                                canEditRequest(request.status)
+                                  ? "cursor-pointer hover:border-blue-200 hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.06)] hover:-translate-y-0.5"
+                                  : "cursor-not-allowed opacity-75"
+                              }`}
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-bold text-slate-800 tracking-tight">#{request.id}</span>
+                                    {getStatusBadge(request.status)}
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-wider">
+                                    {new Date(request.created_at).toLocaleDateString("en-GB", { day: '2-digit', month: 'short' })}
+                                  </p>
+                                </div>
+                                {request.status?.toLowerCase() === "approved" && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDownloadInvoice(request);
                                     }}
-                                    className="text-green-600 hover:text-green-800 p-1 rounded"
-                                    title="Download Invoice"
+                                    className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all"
                                   >
-                                    <Download className="w-3 h-3" />
+                                    <Download className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                               </div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-xs">
-                                <span className="text-gray-500">Vehicle:</span>
-                                <span className="text-gray-900 font-medium">
-                                  {request.vehicle_type}
-                                </span>
-                              </div>
-                              <div className="text-xs">
-                                <span className="text-gray-500">Services:</span>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {(() => {
-                                    try {
-                                      const services = JSON.parse(
-                                        request.service_type || "[]"
-                                      );
-                                      const serviceArray = Array.isArray(services)
-                                        ? services
-                                        : [String(services)];
-                                      return serviceArray
-                                        .slice(0, 2)
-                                        .map((service, idx) => (
-                                          <span
-                                            key={idx}
-                                            className="inline-block px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700"
-                                          >
-                                            {service}
-                                          </span>
-                                        ));
-                                    } catch (error) {
-                                      return (
-                                        <span className="inline-block px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-700">
-                                          N/A
-                                        </span>
-                                      );
-                                    }
-                                  })()}
+                              
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="p-2 bg-slate-50/50 rounded-xl border border-slate-100/50">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Route</span>
+                                  <span className="text-[10px] font-semibold text-slate-700 truncate block">{request.vehicle_type}</span>
+                                </div>
+                                <div className="p-2 bg-slate-50/50 rounded-xl border border-slate-100/50">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Service</span>
+                                  <div className="truncate">
+                                    {(() => {
+                                      try {
+                                        const services = JSON.parse(request.service_type || "[]");
+                                        const serviceArray = Array.isArray(services) ? services : [String(services)];
+                                        return <span className="text-[10px] font-bold text-blue-600 line-clamp-1">{serviceArray[0] || "Standard"}</span>;
+                                      } catch (e) { return <span className="text-[10px] font-bold text-slate-400">N/A</span>; }
+                                    })()}
+                                  </div>
                                 </div>
                               </div>
-                              {request.containerDetails &&
-                                request.containerDetails.length > 0 && (
-                                  <div className="mt-2 text-xs">
-                                    <span className="text-gray-500">
-                                      Containers:
-                                    </span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                      {request.containerDetails.map(
-                                        (container) => (
-                                          <div
-                                            key={container.id}
-                                            className="inline-block px-2 py-1 rounded text-xs bg-gray-50 border border-gray-200 text-gray-700"
-                                          >
-                                            {container.container_no}
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              {(!request.containerDetails ||
-                                request.containerDetails.length === 0) && (
-                                <div className="mt-2 text-xs">
-                                  <span className="text-gray-500">
-                                    Containers:
-                                  </span>
-                                  <div className="flex gap-2 mt-1">
-                                    <span className="text-gray-600 bg-gray-50 px-2 py-1 rounded border border-gray-200">
-                                      No containers assigned
-                                    </span>
+
+                              {request.containerDetails && request.containerDetails.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-slate-100/60 overflow-hidden">
+                                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                                    {request.containerDetails.slice(0, 3).map((container) => (
+                                      <span
+                                        key={container.id}
+                                        className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap shadow-sm"
+                                      >
+                                        {container.container_no}
+                                      </span>
+                                    ))}
+                                    {request.containerDetails.length > 3 && (
+                                      <span className="text-[9px] font-bold text-slate-400 ml-1">+{request.containerDetails.length - 3}</span>
+                                    )}
                                   </div>
                                 </div>
                               )}
                             </div>
-                            {request.admin_comment && (
-                              <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                                <p className="text-gray-600 font-medium">
-                                  Admin:
-                                </p>
-                                <p className="text-gray-700 truncate">
-                                  {request.admin_comment}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                  {totalPages > 1 && (
-                    <div className="mt-4 flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-gray-700">
-                          Page {currentPage} of {totalPages}
-                        </p>
+                          ))
+                        )}
                       </div>
+                    )}
+                  </div>
+                  
+                  {/* Footer Pagination */}
+                  {totalPages > 1 && (
+                    <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between gap-4">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page {currentPage}/{totalPages}</span>
                       <div className="flex gap-2">
                         <button
-                          onClick={() =>
-                            setCurrentPage((prev) => Math.max(prev - 1, 1))
-                          }
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                           disabled={currentPage === 1 || loading}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                         >
-                          Previous
+                          <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() =>
-                            setCurrentPage((prev) =>
-                              Math.min(prev + 1, totalPages)
-                            )
-                          }
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                           disabled={currentPage === totalPages || loading}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                         >
-                          Next
+                          <ChevronRight className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

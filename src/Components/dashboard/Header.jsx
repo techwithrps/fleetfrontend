@@ -9,6 +9,7 @@ import {
   LogOut,
   X,
 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Header = ({
   toggleMobileMenu,
@@ -19,11 +20,13 @@ const Header = ({
   toggleNotifications,
   showUserMenu,
   toggleUserMenu,
-  user,
+  user: userProp,
   handleLogout,
   collapsed,
   toggleSidebar,
 }) => {
+  const { user } = useAuth();
+
   return (
     // Change the header class to adjust z-index and ensure proper positioning
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">

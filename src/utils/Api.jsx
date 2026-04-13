@@ -12,7 +12,11 @@ const getBaseUrl = () => {
 
 const API_BASE_URL = getBaseUrl();
 
-console.log("API_BASE_URL used by axios:", API_BASE_URL);
+const isDev = process.env.NODE_ENV === "development";
+if (isDev) {
+  // eslint-disable-next-line no-console
+  console.log("API_BASE_URL used by axios:", API_BASE_URL);
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,9 +24,6 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-// Variable to track if we're already handling an auth error to prevent infinite loops
-let isHandlingAuthError = false;
 
 // Add interceptor to add auth token to requests
 api.interceptors.request.use(
@@ -47,13 +48,13 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    isHandlingAuthError = false;
     return response;
   },
   (error) => {
-    // Just log the error without any redirection or clearing auth data
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.log("Auth error occurred, but not redirecting or clearing data");
+    // Avoid noisy prod logs; still keep behavior the same.
+    if (isDev && (error.response?.status === 401 || error.response?.status === 403)) {
+      // eslint-disable-next-line no-console
+      console.log("Auth error occurred:", error.response?.status);
     }
 
     // Simply return the error without any redirection
@@ -109,29 +110,10 @@ export const authAPI = {
     }
   },
 
-  signup: async (userData) => {
-    try {
-      const response = await api.post("/auth/signup", userData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
   // Add token validation endpoint
   validateToken: async () => {
     try {
       const response = await api.get("/auth/validate");
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  // Add refresh token endpoint (if your backend supports it)
-  refreshToken: async (refreshToken) => {
-    try {
-      const response = await api.post("/auth/refresh", { refreshToken });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -166,7 +148,7 @@ export const authAPI = {
       return true;
     } catch (error) {
       console.error("Session validation failed:", error);
-      // Don't clear auth data on validation failure
+      clearAuthData();
       return false;
     }
   },
@@ -228,6 +210,84 @@ export const userAPI = {
   createUser: async (userData) => {
     try {
       const response = await api.post("/users/create", userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+};
+
+export const iamAPI = {
+  getBootstrap: async () => {
+    try {
+      const response = await api.get("/iam/bootstrap");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getTerminals: async () => {
+    try {
+      const response = await api.get("/iam/terminals");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  createRole: async (roleData) => {
+    try {
+      const response = await api.post("/iam/roles", roleData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  seedDefaults: async () => {
+    try {
+      const response = await api.post("/iam/seed-defaults");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateRolePermissions: async (roleId, permissionIds) => {
+    try {
+      const response = await api.put(`/iam/roles/${roleId}/permissions`, {
+        permissionIds,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateUserAccess: async (userId, accessData) => {
+    try {
+      const response = await api.put(`/iam/users/${userId}/access`, accessData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+};
+
+export const locationAPI = {
+  getLocations: async () => {
+    try {
+      const response = await api.get("/locations");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getAllLocations: async () => {
+    try {
+      const response = await api.get("/locations");
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -404,16 +464,10 @@ export const setAuthToken = (token) => {
 
       // Set token in axios headers
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      console.log("Auth token set in headers:", token);
-      console.log(
-        "Verification - localStorage token:",
-        localStorage.getItem("token")
-      );
-      console.log(
-        "Verification - axios headers:",
-        api.defaults.headers.common["Authorization"]
-      );
+      if (isDev) {
+        // eslint-disable-next-line no-console
+        console.log("Auth token set in headers");
+      }
 
       return true;
     } catch (error) {
@@ -424,7 +478,10 @@ export const setAuthToken = (token) => {
     try {
       localStorage.removeItem("token");
       delete api.defaults.headers.common["Authorization"];
-      console.log("Auth token removed from headers");
+      if (isDev) {
+        // eslint-disable-next-line no-console
+        console.log("Auth token removed from headers");
+      }
       return true;
     } catch (error) {
       console.error("Error removing auth token:", error);
@@ -437,18 +494,6 @@ export { api };
 
 export default api;
 
-export const locationAPI = {
-  // Get all locations
-  getAllLocations: async () => {
-    try {
-      const response = await api.get("/locations");
-      return response.data;
-      console.log("Locations fetched successfully:", response.data);
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-};
 export const transporterListAPI = {
   getAllTransporters: async (page = 1) => {
     try {
@@ -1129,16 +1174,29 @@ export const asnAPI = {
   },
 };
 
-export const rateCardAPI = {
-    create: (data) => api.post('/rate-cards/create', data),
-    createBulk: (dataArray) => api.post('/rate-cards/bulk', { records: dataArray }),
-    getCustomerRates: (id) => api.get('/rate-cards/customer-rates'),
-    getPendingRates: () => api.get('/rate-cards/pending'),
-    updateStatus: (id, data) => api.put(`/rate-cards/update-status/${id}`, data),
-    delete: (id) => api.delete(`/rate-cards/${id}`),
-    matchRate: (data) => api.post('/rate-cards/match', data),
-    fetchActiveRate: (container_size, vehicle_type, vehicle_size, vehicle_status) => 
-        api.get('/rate-cards/fetch-active-rate', { 
-            params: { container_size, vehicle_type, vehicle_size, vehicle_status } 
-        }),
+export const emailConfigAPI = {
+  getActive: async () => {
+    try {
+      const response = await api.get("/email-config/active");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  upsertActive: async (payload) => {
+    try {
+      const response = await api.put("/email-config/active", payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  test: async (payload) => {
+    try {
+      const response = await api.post("/email-config/test", payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };

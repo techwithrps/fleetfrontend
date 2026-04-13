@@ -291,6 +291,7 @@ const DriverDetails = () => {
   const [showModal, setShowModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState(null);
   const [pendingAction, setPendingAction] = useState(null); // 'create' or 'update'
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
     vendor_id: "",
@@ -365,10 +366,67 @@ const DriverDetails = () => {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let nextValue = value;
+
+    if (name === "email_id") {
+      nextValue = value.toLowerCase();
+    } else if (["vehicle_no"].includes(name)) {
+      nextValue = value.replace(/[\s-]/g, "").toUpperCase();
+    } else if (["dl_no"].includes(name)) {
+      nextValue = value.replace(/[\s/-]/g, "").toUpperCase();
+    } else if (
+      ["contact_no", "mobile_no", "phone_no", "emerg_phone"].includes(name)
+    ) {
+      const digits = value.replace(/\D/g, "");
+      nextValue =
+        digits.startsWith("91") && digits.length > 10
+          ? digits.slice(2, 12)
+          : digits.slice(0, 10);
+    }
+
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: nextValue,
     });
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const getDriverFieldError = (name, value) => {
+    if (!value) return "";
+    const validators = {
+      email_id: () =>
+        /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(value)
+          ? ""
+          : "Enter valid email (e.g., driver@company.com)",
+      vehicle_no: () =>
+        /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{1,4}$/.test(value)
+          ? ""
+          : "Use valid vehicle no (e.g., UP78CN6949)",
+      dl_no: () =>
+        /^[A-Z]{2}[0-9]{2}[0-9A-Z]{7,15}$/.test(value)
+          ? ""
+          : "Use valid DL no (e.g., UP3220190012345)",
+      mobile_no: () => (/^[6-9]\d{9}$/.test(value) ? "" : "Enter valid 10-digit mobile"),
+      contact_no: () => (/^\d{10}$/.test(value) ? "" : "Enter 10-digit contact no"),
+      phone_no: () => (/^\d{10}$/.test(value) ? "" : "Enter 10-digit phone no"),
+      emerg_phone: () => (/^\d{10}$/.test(value) ? "" : "Enter 10-digit emergency no"),
+    };
+    return validators[name] ? validators[name]() : "";
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    if (!name) return;
+    const message = getDriverFieldError(name, value);
+    e.target.setCustomValidity(message);
+    if (message) {
+      e.target.reportValidity();
+      setFieldErrors((prev) => ({ ...prev, [name]: message }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   // Handle driver selection
@@ -423,6 +481,26 @@ const DriverDetails = () => {
 
     if (!formData.driver_name.trim()) {
       toast.error("Driver name is required");
+      return;
+    }
+
+    const keys = [
+      "email_id",
+      "vehicle_no",
+      "dl_no",
+      "mobile_no",
+      "contact_no",
+      "phone_no",
+      "emerg_phone",
+    ];
+    const nextErrors = {};
+    keys.forEach((key) => {
+      const msg = getDriverFieldError(key, formData[key]);
+      if (msg) nextErrors[key] = msg;
+    });
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
+      toast.error("Please fix highlighted driver fields");
       return;
     }
 
@@ -517,8 +595,8 @@ const DriverDetails = () => {
         console.error("Error deleting driver:", error);
         toast.error(
           error.response?.data?.error ||
-            error.message ||
-            "Failed to delete driver"
+          error.message ||
+          "Failed to delete driver"
         );
       }
     }
@@ -577,14 +655,29 @@ const DriverDetails = () => {
         onVerify={handleModalVerify}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Driver List */}
-        <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Driver List</h2>
+        <div className="order-2 lg:order-2 bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-medium text-gray-900">Driver List</h2>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Select a driver to view or update details.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                resetForm();
+                setIsEditing(true);
+              }}
+              className="shrink-0 inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              type="button"
+            >
+              Add Driver
+            </button>
           </div>
 
-          <div className="divide-y divide-gray-200 max-h-[70vh] overflow-y-auto">
+          <div className="px-4 pb-4 max-h-[70vh] overflow-y-auto">
             {loading ? (
               <div className="p-4 flex justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -597,45 +690,40 @@ const DriverDetails = () => {
               drivers.map((driver) => (
                 <div
                   key={driver.DRIVER_ID}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${
+                  className={`mb-3 cursor-pointer rounded-xl border p-4 transition ${
                     selectedDriver?.DRIVER_ID === driver.DRIVER_ID
-                      ? "bg-blue-50"
-                      : ""
+                      ? "border-blue-200 bg-blue-50/60"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                   onClick={() => handleSelectDriver(driver)}
                 >
-                  <div className="font-medium text-gray-900">
-                    {driver.DRIVER_NAME}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 truncate">
+                        {driver.DRIVER_NAME}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-600 truncate">
+                        Code: {driver.DRIVER_CODE || "N/A"}
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset bg-slate-50 text-slate-700 ring-slate-100">
+                      #{driver.DRIVER_ID}
+                    </span>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Driver Code: {driver.DRIVER_CODE || "N/A"}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Vehicle: {driver.VEHICLE_NO || "N/A"}
-                  </div>
-                  <div className="text-sm text-blue-600">
-                    Vendor: {driver.VENDOR_NAME || "N/A"}
+                  <div className="mt-3 text-xs text-gray-500">
+                    <div>Vehicle: {driver.VEHICLE_NO || "N/A"}</div>
+                    <div className="mt-1 text-blue-700">
+                      Vendor: {driver.VENDOR_NAME || getVendorName(driver.VENDOR_ID)}
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-
-          <div className="p-4 bg-gray-50 border-t border-gray-200">
-            <button
-              onClick={() => {
-                resetForm();
-                setIsEditing(true);
-              }}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Add New Driver
-            </button>
-          </div>
         </div>
 
         {/* Driver Form */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow">
+        <div className="order-1 lg:order-1 bg-white rounded-lg shadow">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
               {isEditing
@@ -668,7 +756,7 @@ const DriverDetails = () => {
                 <p>Select a driver from the list or add a new one</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} onBlurCapture={handleFieldBlur} className="space-y-6">
                 {/* Alert about inspection requirement */}
                 {isEditing && (
                   <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
@@ -729,19 +817,12 @@ const DriverDetails = () => {
                       </select>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Terminal ID
-                      </label>
-                      <input
-                        type="number"
-                        name="terminal_id"
-                        value={formData.terminal_id}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-                      />
-                    </div>
+                    <input
+                      type="hidden"
+                      name="terminal_id"
+                      value={formData.terminal_id}
+                      onChange={handleInputChange}
+                    />
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
@@ -768,6 +849,7 @@ const DriverDetails = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         required
+                        placeholder="DRIVER NAME"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
@@ -811,7 +893,7 @@ const DriverDetails = () => {
                           value={formData.blood_group}
                           onChange={handleInputChange}
                           disabled={!isEditing}
-                          placeholder="e.g., A+, B-, O+"
+                          placeholder="A+ / B+ / O+"
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                         />
                       </div>
@@ -848,8 +930,10 @@ const DriverDetails = () => {
                         value={formData.email_id}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="name@domain.com"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.email_id ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.email_id && <p className="mt-1 text-xs text-red-600">{fieldErrors.email_id}</p>}
                     </div>
 
                     <div>
@@ -862,8 +946,10 @@ const DriverDetails = () => {
                         value={formData.contact_no}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="##########"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.contact_no ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.contact_no && <p className="mt-1 text-xs text-red-600">{fieldErrors.contact_no}</p>}
                     </div>
 
                     <div>
@@ -876,8 +962,10 @@ const DriverDetails = () => {
                         value={formData.mobile_no}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="##########"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.mobile_no ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.mobile_no && <p className="mt-1 text-xs text-red-600">{fieldErrors.mobile_no}</p>}
                     </div>
 
                     <div>
@@ -890,8 +978,10 @@ const DriverDetails = () => {
                         value={formData.phone_no}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="##########"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.phone_no ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.phone_no && <p className="mt-1 text-xs text-red-600">{fieldErrors.phone_no}</p>}
                     </div>
 
                     <div>
@@ -904,8 +994,10 @@ const DriverDetails = () => {
                         value={formData.emerg_phone}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="##########"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.emerg_phone ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.emerg_phone && <p className="mt-1 text-xs text-red-600">{fieldErrors.emerg_phone}</p>}
                     </div>
                   </div>
                 </div>
@@ -940,10 +1032,12 @@ const DriverDetails = () => {
                         name="vehicle_no"
                         value={formData.vehicle_no}
                         onChange={handleInputChange}
+                        onBlur={handleFieldBlur}
                         disabled={!isEditing}
-                        placeholder="e.g., DL01AB1234"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="AA00AA0000"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.vehicle_no ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.vehicle_no && <p className="mt-1 text-xs text-red-600">{fieldErrors.vehicle_no}</p>}
                     </div>
 
                     <div>
@@ -956,8 +1050,10 @@ const DriverDetails = () => {
                         value={formData.dl_no}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="AA00###########"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.dl_no ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.dl_no && <p className="mt-1 text-xs text-red-600">{fieldErrors.dl_no}</p>}
                     </div>
 
                     <div>

@@ -138,6 +138,17 @@ const BedAttachment = () => {
       <h1 className="text-2xl font-bold mb-6">Bed Attach / Detach</h1>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Assign Bed</h2>
+            <p className="text-sm text-gray-500">Attach one active bed per vehicle.</p>
+          </div>
+          {hasActiveBedOnSelectedVehicle && (
+            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
+              Active bed already attached
+            </span>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -196,7 +207,7 @@ const BedAttachment = () => {
           <button
             onClick={handleAttach}
             disabled={hasActiveBedOnSelectedVehicle}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             Attach
           </button>
@@ -209,7 +220,7 @@ const BedAttachment = () => {
             Attached Beds
           </h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="p-4 max-h-[62vh] overflow-y-auto">
           {attachments.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               No bed attachments found
@@ -218,21 +229,27 @@ const BedAttachment = () => {
             attachments.map((attach) => (
               <div
                 key={attach.BED_ATTACH_ID}
-                className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                className="mb-3 rounded-xl border border-gray-200 bg-white p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4"
               >
                 <div>
-                  <div className="font-medium text-gray-900">
+                  <div className="font-semibold text-gray-900">
                     Vehicle:{" "}
                     {equipmentMap[String(attach.EQUIPMENT_ID)]?.EQUIPMENT_NO ||
                       attach.EQUIPMENT_ID}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-600">
                     Bed: {bedMap[String(attach.BED_ID)]?.BED_NO || attach.BED_ID}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Status: {attach.ATTACH_STATUS || "ATTACHED"}
+                  <div className="mt-2">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+                      (attach.ATTACH_STATUS || "ATTACHED").toUpperCase() === "DETACHED"
+                        ? "bg-slate-50 text-slate-700 ring-slate-100"
+                        : "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                    }`}>
+                      {(attach.ATTACH_STATUS || "ATTACHED").toUpperCase()}
+                    </span>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 mt-2">
                     Attached: {formatDateTime(attach.ATTACH_DATE)}
                   </div>
                   <div className="text-sm text-gray-500">
@@ -247,7 +264,7 @@ const BedAttachment = () => {
                 {attach.ATTACH_STATUS !== "DETACHED" && (
                   <button
                     onClick={() => handleDetach(attach.BED_ATTACH_ID)}
-                    className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+                    className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm self-start"
                   >
                     Detach
                   </button>

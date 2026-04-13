@@ -13,7 +13,6 @@ import {
   LogOut,
   Shield,
   Activity,
-  ClipboardList,
   Wallet,
 } from "lucide-react";
 
@@ -44,6 +43,12 @@ export function AdminSidebar({
           icon: Users,
           path: "users",
           description: "Manage Users",
+        },
+        {
+          name: "IAM Access",
+          icon: Shield,
+          path: "iam",
+          description: "Roles, Permissions, Terminals",
         },
       ],
     },
@@ -139,17 +144,17 @@ export function AdminSidebar({
           path: "bed-master",
           description: "Manage Bed Inventory",
         },
+        {
+          name: "Email Configuration",
+          icon: FileText,
+          path: "email-config",
+          description: "SMTP Settings",
+        },
       ],
     },
     {
       title: "Commercial",
       items: [
-        {
-          name: "Contract Approvals",
-          icon: ClipboardList,
-          path: "rate-approvals",
-          description: "Approve Rate Cards",
-        },
         {
           name: "Payment Receipts",
           icon: Wallet,

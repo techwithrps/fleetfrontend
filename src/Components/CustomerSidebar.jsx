@@ -14,7 +14,6 @@ import {
   ChevronRight,
   MapPinned,
   ScanSearch,
-  ClipboardList,
 } from "lucide-react";
 export function CustomerSidebar({
   collapsed,
@@ -140,17 +139,6 @@ export function CustomerSidebar({
           icon: FileText,
           path: "bed-master",
           description: "Manage Bed Inventory",
-        },
-      ],
-    },
-    {
-      title: "Commercial",
-      items: [
-        {
-          name: "Rate Management",
-          icon: ClipboardList,
-          path: "rate-management",
-          description: "Manage Service Contracts",
         },
       ],
     },

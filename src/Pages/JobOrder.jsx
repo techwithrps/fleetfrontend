@@ -174,12 +174,25 @@ const JobOrder = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Job Order</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Job Orders</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="order-2 lg:order-2 bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-medium text-gray-900">Job Orders</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Open and manage job orders.</p>
+            </div>
+            <button
+              onClick={() => {
+                resetForm();
+                setIsEditing(true);
+              }}
+              className="shrink-0 inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+              type="button"
+            >
+              Add JO
+            </button>
           </div>
-          <div className="divide-y divide-gray-200 max-h-[65vh] overflow-y-auto">
+          <div className="max-h-[65vh] overflow-y-auto p-4">
             {orders.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
                 No job orders found
@@ -188,38 +201,33 @@ const JobOrder = () => {
               orders.map((order) => (
                 <div
                   key={order.JO_ID}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                    selectedOrder?.JO_ID === order.JO_ID ? "bg-blue-50" : ""
+                  className={`mb-3 rounded-xl border p-4 cursor-pointer transition ${
+                    selectedOrder?.JO_ID === order.JO_ID
+                      ? "border-blue-200 bg-blue-50/60"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                   onClick={() => handleSelectOrder(order)}
                 >
-                  <div className="font-medium text-gray-900">
-                    {order.JO_NO || "JO"}
-                  </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="font-semibold text-gray-900 truncate">{order.JO_NO || "JO"}</div>
+                  <div className="text-sm text-gray-600 mt-1">
                     Type: {order.JO_TYPE || "N/A"}
                   </div>
-                  <div className="text-sm text-blue-600">
-                    Status: {order.STATUS || "OPEN"}
+                  <div className="mt-2">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+                      (order.STATUS || "OPEN").toUpperCase() === "OPEN"
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                        : "bg-slate-50 text-slate-700 ring-slate-100"
+                    }`}>
+                      {(order.STATUS || "OPEN").toUpperCase()}
+                    </span>
                   </div>
                 </div>
               ))
             )}
           </div>
-          <div className="p-4 bg-gray-50 border-t border-gray-200">
-            <button
-              onClick={() => {
-                resetForm();
-                setIsEditing(true);
-              }}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Add New Job Order
-            </button>
-          </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white rounded-lg shadow">
+        <div className="order-1 lg:order-1 bg-white rounded-lg shadow">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
               {isEditing

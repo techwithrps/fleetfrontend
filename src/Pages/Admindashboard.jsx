@@ -46,9 +46,9 @@ const formatDateTime = (dateString) =>
 
 // Component for Summary Cards
 const SummaryCard = ({ title, value, color, currency = true }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border">
-    <p className="text-sm text-gray-500 font-medium">{title}</p>
-    <p className={`text-2xl font-bold ${color}`}>
+  <div className="bg-white p-6 rounded-2xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300">
+    <p className="text-sm text-slate-500 font-medium mb-1">{title}</p>
+    <p className={`text-3xl font-extrabold tracking-tight ${color || "text-slate-800"}`}>
       {currency ? `₹${value.toLocaleString()}` : value}
     </p>
   </div>
@@ -783,126 +783,108 @@ const AdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading reports...</p>
-        </div>
+      <div className="min-h-[80vh] flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 shadow-sm"></div>
+        <p className="text-slate-500 font-medium animate-pulse">Loading amazing reports...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Admin Reports
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                View all transport requests or filter by SHIPA No, Request ID,
-                Container No, Specific Date, From Date, To Date, or Status
-              </p>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={refreshData}
-                className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </button>
-              <button
-                onClick={exportToExcel}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export to Excel
-              </button>
-              <button
-                onClick={exportVehicleWiseExcel}
-                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export Vehicle-wise
-              </button>
-            </div>
+      <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-200/60 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+              Admin Reports
+            </h1>
+            <p className="mt-2 text-sm font-medium text-slate-500 max-w-2xl">
+              View all transport requests or filter by SHIPA No, Request ID,
+              Container No, Specific Date, From Date, To Date, or Status
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={refreshData}
+              className="inline-flex items-center px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-all shadow-sm shadow-slate-100"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="inline-flex items-center px-4 py-2.5 bg-blue-600 border border-transparent text-white font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/20"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Detailed Export
+            </button>
+            <button
+              onClick={exportVehicleWiseExcel}
+              className="inline-flex items-center px-4 py-2.5 bg-slate-800 border border-transparent text-white font-medium rounded-xl hover:bg-slate-900 transition-all shadow-sm shadow-slate-800/20"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Vehicle Export
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Expiry Alerts (Next {expiryAlerts.days || 10} Days)
+      <div className="flex flex-col gap-6">
+        <div className="bg-white p-4 md:p-5 rounded-2xl shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-rose-400 to-orange-400"></div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between ml-2">
+            <div className="mb-3 md:mb-0">
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                Expiry Alerts
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Next {expiryAlerts.days || 10} Days</span>
               </h2>
-              <p className="text-xs text-gray-500">
-                Vehicles and driver license renewals due soon
-              </p>
             </div>
-          </div>
-          {expiryLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border rounded-lg p-4">
-                <p className="text-xs text-gray-500 mb-2">Vehicles</p>
-                {expiryAlerts.vehicleExpiries?.length ? (
-                  <div className="space-y-2">
-                    {expiryAlerts.vehicleExpiries.slice(0, 6).map((item, idx) => (
+
+            {expiryLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-rose-500"></div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 flex-1 justify-end">
+                {/* Vehicles */}
+                <div className="flex-1 max-w-lg flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">Vehicles:</span>
+                  {expiryAlerts.vehicleExpiries?.length ? (
+                    expiryAlerts.vehicleExpiries.slice(0, 6).map((item, idx) => (
                       <div
                         key={`${item.EQUIPMENT_ID}-${item.EXPIRY_TYPE}-${idx}`}
-                        className="text-sm text-gray-700 border rounded-md p-2"
+                        className="flex-shrink-0 flex items-center gap-1.5 text-[11px] bg-rose-50 border border-rose-100 text-rose-700 rounded-md px-2.5 py-1 whitespace-nowrap"
                       >
-                        <div className="font-medium">
-                          {item.EQUIPMENT_NO || "Vehicle"}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {formatExpiryLabel(item.EXPIRY_TYPE)} •{" "}
-                          {formatExpiryDate(item.EXPIRY_DATE)}
-                        </div>
+                        <span className="font-bold">{item.EQUIPMENT_NO || "Vehicle"}</span>
+                        <span className="w-1 h-1 rounded-full bg-rose-300"></span>
+                        <span>{formatExpiryLabel(item.EXPIRY_TYPE)}: {formatExpiryDate(item.EXPIRY_DATE)}</span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    No vehicle expiries in this window.
-                  </p>
-                )}
-              </div>
-              <div className="border rounded-lg p-4">
-                <p className="text-xs text-gray-500 mb-2">Drivers</p>
-                {expiryAlerts.driverExpiries?.length ? (
-                  <div className="space-y-2">
-                    {expiryAlerts.driverExpiries.slice(0, 6).map((item, idx) => (
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-slate-400 italic">No vehicle expiries</span>
+                  )}
+                </div>
+
+                {/* Drivers */}
+                <div className="flex-1 max-w-lg flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">Drivers:</span>
+                  {expiryAlerts.driverExpiries?.length ? (
+                    expiryAlerts.driverExpiries.slice(0, 6).map((item, idx) => (
                       <div
                         key={`${item.DRIVER_ID}-${idx}`}
-                        className="text-sm text-gray-700 border rounded-md p-2"
+                        className="flex-shrink-0 flex items-center gap-1.5 text-[11px] bg-amber-50 border border-amber-100 text-amber-700 rounded-md px-2.5 py-1 whitespace-nowrap"
                       >
-                        <div className="font-medium">
-                          {item.DRIVER_NAME || "Driver"}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          License • {formatExpiryDate(item.EXPIRY_DATE)}
-                        </div>
+                        <span className="font-bold">{item.DRIVER_NAME || "Driver"}</span>
+                        <span className="w-1 h-1 rounded-full bg-amber-300"></span>
+                        <span>{formatExpiryDate(item.EXPIRY_DATE)}</span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    No driver expiries in this window.
-                  </p>
-                )}
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-slate-400 italic">No driver expiries</span>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -936,153 +918,179 @@ const AdminDashboard = () => {
           />
         </div>
 
-        {/* Filters */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
-            <input
-              type="text"
-              placeholder="SHIPA No"
-              value={shipaNo}
-              onChange={(e) => setShipaNo(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Request ID"
-              value={requestId}
-              onChange={(e) => setRequestId(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Container No"
-              value={containerNo}
-              onChange={(e) => setContainerNo(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="date"
-              placeholder="Specific Date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="date"
-              placeholder="From Date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="date"
-              placeholder="To Date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="rejected">Rejected</option>
-            </select>
+        <div className="bg-white p-6 rounded-2xl shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border border-slate-100 mb-8 overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-60"></div>
+          <div className="flex items-center gap-2 mb-5">
+            <Search className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">Advanced Search</h2>
           </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={handleSearch}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              disabled={isLoading}
-            >
-              <Search className="h-5 w-5 mr-2" />
-              {isLoading ? "Searching..." : "Search"}
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Shipa Number</label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  placeholder="e.g. DOC2024..."
+                  value={shipaNo}
+                  onChange={(e) => setShipaNo(e.target.value)}
+                  className="w-full pl-3 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all group-hover:bg-white"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Request ID</label>
+              <input
+                type="text"
+                placeholder="Search ID..."
+                value={requestId}
+                onChange={(e) => setRequestId(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Container No</label>
+              <input
+                type="text"
+                placeholder="Search container..."
+                value={containerNo}
+                onChange={(e) => setContainerNo(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Specific Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">From Date</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">To Date</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white appearance-none cursor-pointer"
+              >
+                <option value="all">All Request Status</option>
+                <option value="pending">Pending Approval</option>
+                <option value="approved">Approved</option>
+                <option value="in progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div className="xl:col-span-1 flex items-end">
+              <button
+                onClick={handleSearch}
+                className="w-full flex items-center justify-center px-4 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    <span>Search Data</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Reports Table */}
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        <div className="bg-white rounded-2xl shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Request Details
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Customer & Route
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Service & Vehicle
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vehicle-Container Mapping
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    Vehicle-Container
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Financial Summary
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Payment Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-100">
                 {reports.map((report) => (
-                  <tr key={report.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium text-gray-900">
+                  <tr key={report.id} className="hover:bg-slate-50/70 transition-colors duration-150">
+                    <td className="px-3 py-4 align-top whitespace-nowrap min-w-[140px]">
+                      <div className="space-y-2">
+                        <div className="text-xs font-bold text-slate-800 tracking-tight">
                           {report.formatted_request_id}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          GR: {report.gr_no}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Trip: {report.trip_no}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Invoice: {report.invoice_no}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          SHIPA: {report.shipa_no}
+                        <div className="flex flex-col gap-0.5 text-[11px] text-slate-500">
+                          <span><span className="font-medium">GR:</span> {report.gr_no}</span>
+                          <span><span className="font-medium">Trip:</span> {report.trip_no}</span>
+                          <span className="truncate max-w-[140px]" title={report.invoice_no}><span className="font-medium">Inv:</span> {report.invoice_no}</span>
+                          <span className="truncate max-w-[140px]" title={report.shipa_no}><span className="font-medium">SHIPA:</span> {report.shipa_no}</span>
                         </div>
                         <StatusBadge status={report.status} />
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm">
-                        <div className="font-medium">
+                    <td className="px-3 py-4 align-top min-w-[140px] max-w-[200px] break-words whitespace-normal">
+                      <div className="space-y-1 text-xs">
+                        <div className="font-semibold text-[13px] text-slate-800">
                           {report.customer_name}
                         </div>
-                        <div className="text-gray-500">
+                        <div className="text-slate-500 text-[11px] truncate" title={report.customer_email || ""}>
                           {report.customer_email || "N/A"}
                         </div>
-                        <div className="flex items-center text-gray-500 text-xs">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {report.pickup_location} → {report.delivery_location}
+                        <div className="flex items-start text-slate-600 text-[11px] mt-2 bg-slate-50 p-1.5 rounded-md border border-slate-100">
+                          <MapPin className="w-3.5 h-3.5 mr-1 text-slate-400 mt-0.5 shrink-0" />
+                          <span className="leading-tight">{report.pickup_location} <br/><span className="text-slate-400">→</span> {report.delivery_location}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm">
-                        <div className="font-medium">{report.commodity}</div>
-                        <div className="text-gray-500">
-                          {report.vehicle_type} ({report.vehicle_size})
+                    <td className="px-3 py-4 align-top min-w-[140px] max-w-[180px] break-words whitespace-normal">
+                      <div className="space-y-2 text-xs">
+                        <div>
+                           <div className="font-semibold text-slate-700">{report.commodity}</div>
+                           <div className="text-slate-500 text-[11px]">
+                             {report.vehicle_type} ({report.vehicle_size})
+                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {report.service_types.map((service, idx) => (
                             <span
                               key={idx}
-                              className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+                              className="text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded-md"
                             >
                               {service}
                             </span>
@@ -1090,83 +1098,88 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm">
+                    <td className="px-3 py-4 align-top min-w-[200px] max-w-[260px]">
+                      <div className="max-h-[140px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
                         {Object.entries(report.vehicle_container_mapping).map(
                           ([vehicle, info]) => (
-                            <div key={vehicle} className="text-gray-700">
-                              {vehicle}: {info.containers.join(", ")} [
-                              {info.container_types.join(", ")}/
-                              {info.container_sizes.join(", ")}]
+                            <div key={vehicle} className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 shadow-sm">
+                              <span className="font-bold text-slate-800 block mb-0.5">{vehicle}</span>
+                              <span className="break-all leading-tight opacity-90">
+                                {info.containers.join(", ")} [{info.container_types.join(", ")}/{info.container_sizes.join(", ")}]
+                              </span>
                             </div>
                           )
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Service:</span>
-                          <span className="text-green-600">
+                    <td className="px-3 py-4 align-top min-w-[140px] whitespace-nowrap">
+                      <div className="space-y-1.5 text-xs bg-slate-50/50 p-2 rounded-lg border border-slate-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 text-[11px]">Service:</span>
+                          <span className="font-semibold text-slate-700">
                             {formatCurrency(report.service_charges)}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Vehicle:</span>
-                          <span className="text-orange-600">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 text-[11px]">Vehicle:</span>
+                          <span className="font-semibold text-slate-700">
                             {formatCurrency(report.vehicle_charges)}
                           </span>
                         </div>
-                        <div className="flex justify-between border-t pt-1">
-                          <span className="text-gray-500">Profit:</span>
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-1 mt-1">
+                          <span className="text-slate-500 font-medium text-[11px]">Profit:</span>
                           <span
-                            className={`${
+                            className={`font-bold ${
                               report.profit_loss >= 0
-                                ? "text-green-600"
-                                : "text-red-600"
+                                ? "text-emerald-600"
+                                : "text-rose-600"
                             }`}
                           >
-                            {formatCurrency(report.profit_loss)} (
-                            {report.profit_loss_percentage.toFixed(2)}%)
+                            {formatCurrency(report.profit_loss)}
+                            <span className="text-[10px] font-normal ml-1">({report.profit_loss_percentage.toFixed(1)}%)</span>
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Paid:</span>
-                          <span className="text-blue-600">
-                            {formatCurrency(report.total_paid)}
+                    <td className="px-3 py-4 align-top min-w-[130px] whitespace-nowrap">
+                      <div className="space-y-2 text-xs">
+                        <div className="space-y-1">
+                           <div className="flex justify-between items-center">
+                             <span className="text-slate-500 text-[11px]">Paid:</span>
+                             <span className="font-semibold text-slate-700">
+                               {formatCurrency(report.total_paid)}
+                             </span>
+                           </div>
+                           <div className="flex justify-between items-center">
+                             <span className="text-slate-500 text-[11px]">Left:</span>
+                             <span className="font-semibold text-rose-600">
+                               {formatCurrency(report.outstanding_amount)}
+                             </span>
+                           </div>
+                        </div>
+                        <div>
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              report.payment_status === "Fully Paid"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : report.payment_status === "Partially Paid"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {report.payment_status}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Outstanding:</span>
-                          <span className="text-red-600">
-                            {formatCurrency(report.outstanding_amount)}
-                          </span>
-                        </div>
-                        <span
-                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                            report.payment_status === "Fully Paid"
-                              ? "bg-green-100 text-green-800"
-                              : report.payment_status === "Partially Paid"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {report.payment_status}
-                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex space-x-2 justify-end">
+                    <td className="px-3 py-4 align-top whitespace-nowrap text-right">
+                      <div className="flex flex-col space-y-2 items-end">
                         <button
                           onClick={() => handleViewReport(report)}
-                          className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                          className="inline-flex items-center justify-center p-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          title="View Details"
                         >
-                          <Eye className="w-3 h-3 mr-1" />
-                          View Details
+                          <Eye className="w-4 h-4" />
                         </button>
                         {report.status?.toLowerCase() === "approved" && (
                           <button

@@ -1,35 +1,24 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   Mail,
   Lock,
-  User,
-  Phone,
   ChevronDown,
-  CheckCircle,
   LogIn,
-  UserPlus,
+  CheckCircle,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
 import { authAPI, setAuthToken } from "../utils/Api";
 import { locationAPI } from "../utils/Api"; // example
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true);
   const [locations, setLocations] = useState([]); // State to hold locations
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
-    phone: "",
     password: "",
-    role: "Customer",
     location: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
-  const { login, signup } = useAuth();
 
   // Fixed useEffect in your Login component
   useEffect(() => {
@@ -60,59 +49,42 @@ export default function Login() {
     setError("");
 
     try {
-      if (isLogin) {
-        const { email, password } = formData;
-        const response = await authAPI.login({ email, password });
+      const { email, password } = formData;
+      const response = await authAPI.login({ email, password });
 
-        if (response && response.token) {
-          const token = response.token;
-          const user = response.user;
+      if (response && response.token) {
+        const token = response.token;
+        const user = response.user;
 
-          setAuthToken(token);
-          localStorage.setItem("user", JSON.stringify(user));
-          localStorage.setItem("token", token);
+        setAuthToken(token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", token);
 
-          await new Promise((resolve) => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
-          toast.success(`Welcome back, ${user.name || user.email}!`, {
-            autoClose: 3000,
-            position: "top-right",
-          });
-
-          setTimeout(() => {
-            const userRole = user?.role;
-            if (userRole === "Admin") {
-              window.location.href = "/admin-dashboard";
-            } else if (userRole === "Customer") {
-              window.location.href = "/customer-dashboard";
-            } else if (userRole === "Driver") {
-              window.location.href = "/driver-dashboard";
-            } else if (userRole === "Accounts") {
-              window.location.href = "/accounts-dashboard";
-            } else if (userRole === "Reports & MIS") {
-              window.location.href = "/reports-dashboard";
-            } else {
-              window.location.href = "/dashboard";
-            }
-          }, 1000);
-        } else {
-          throw new Error("Invalid response from server. Please try again.");
-        }
-      } else {
-        // Handle Signup using the auth context
-        const response = await signup(formData);
-
-        toast.success(
-          response.message || "Account created successfully! Please log in."
-        );
-        setIsLogin(true);
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          password: "",
-          role: "Customer",
+        toast.success(`Welcome back, ${user.name || user.email}!`, {
+          autoClose: 3000,
+          position: "top-right",
         });
+
+        setTimeout(() => {
+          const userRole = user?.role;
+          if (userRole === "Admin") {
+            window.location.href = "/admin-dashboard";
+          } else if (userRole === "Customer") {
+            window.location.href = "/customer-dashboard";
+          } else if (userRole === "Driver") {
+            window.location.href = "/driver-dashboard";
+          } else if (userRole === "Accounts") {
+            window.location.href = "/accounts-dashboard";
+          } else if (userRole === "Reports & MIS") {
+            window.location.href = "/reports-dashboard";
+          } else {
+            window.location.href = "/dashboard";
+          }
+        }, 1000);
+      } else {
+        throw new Error("Invalid response from server. Please try again.");
       }
     } catch (err) {
       console.error("Authentication error:", err);
@@ -141,28 +113,15 @@ export default function Login() {
     }
   };
 
-  const toggleAuthMode = () => {
-    setIsLogin(!isLogin);
-    setError("");
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      password: "",
-      role: "Customer",
-    });
-  };
-
-  const roles = ["Admin", "Accounts", "Reports & MIS", "Customer", "Driver"];
-
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <div className="flex flex-col w-full md:w-1/2 bg-white">
-        <div className="flex flex-grow items-center justify-center p-8">
-          <div className="w-full max-w-md">
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Form Section */}
+      <div className="flex flex-col w-full lg:w-1/2 bg-white relative z-10 shadow-[0_0_60px_-15px_rgba(0,0,0,0.1)]">
+        <div className="flex flex-grow items-center justify-center p-8 sm:p-12 lg:p-16">
+          <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Logo and Title */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white mb-4">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-indigo-200 mb-6 transform transition-transform hover:scale-105">
                 <svg
                   className="w-8 h-8"
                   fill="none"
@@ -178,92 +137,43 @@ export default function Login() {
                   ></path>
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Fleet Management
               </h1>
-              <p className="text-gray-500 mt-2">
-                {isLogin
-                  ? "Sign in to your account"
-                  : "Create a new account"}
+              <p className="text-slate-500 mt-2 text-sm font-medium">
+                Welcome back! Please enter your details.
               </p>
             </div>
 
-            {/* Auth Tabs */}
-            <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setIsLogin(true)}
-                className={`w-1/2 py-2 text-sm font-medium rounded-md transition-all ${
-                  isLogin
-                    ? "bg-white shadow text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <span className="flex items-center justify-center">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Login
-                </span>
-              </button>
-              <button
-                onClick={() => setIsLogin(false)}
-                className={`w-1/2 py-2 text-sm font-medium rounded-md transition-all ${
-                  !isLogin
-                    ? "bg-white shadow text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <span className="flex items-center justify-center">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Sign Up
-                </span>
-              </button>
+            <div className="mb-8 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 backdrop-blur-sm">
+              <div className="w-full py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 bg-white text-blue-600 shadow-sm ring-1 ring-slate-900/5 flex items-center justify-center">
+                <LogIn className="w-4 h-4 mr-2" />
+                Login
+              </div>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
-                {error}
+              <div className="mb-6 p-4 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl flex items-start animate-in fade-in zoom-in-95 duration-300">
+                <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <>
-                {/* Regular form fields */}
-                {!isLogin && (
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="John Doe"
-                        required={!isLogin}
-                      />
-                    </div>
-                  </div>
-                )}
-
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-5">
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-semibold text-slate-700 mb-1.5"
                   >
                     Email Address
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                      <Mail className="h-5 w-5" />
                     </div>
                     <input
                       type="email"
@@ -271,91 +181,23 @@ export default function Login() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="you@example.com"
+                      className="pl-11 w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
+                      placeholder="name@example.com"
                       required
                     />
                   </div>
                 </div>
 
-                {!isLogin && (
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Phone className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (/^\d*$/.test(value)) {
-                            setFormData((prev) => ({
-                              ...prev,
-                              phone: value,
-                            }));
-                          }
-                        }}
-                        className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter phone number"
-                        maxLength={10}
-                        required={!isLogin}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {!isLogin && (
-                  <div>
-                    <label
-                      htmlFor="role"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Role
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="role"
-                        name="role"
-                        value={formData.role}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-blue-500 focus:border-blue-500"
-                        required={!isLogin}
-                      >
-                        <option value="" disabled>
-                          Select Role
-                        </option>
-                        {roles.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <ChevronDown className="h-5 w-5 text-gray-400" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-semibold text-slate-700 mb-1.5"
                   >
                     Password
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                      <Lock className="h-5 w-5" />
                     </div>
                     <input
                       type="password"
@@ -363,153 +205,164 @@ export default function Login() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      className="pl-11 w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
                       placeholder="••••••••"
                       required
                     />
                   </div>
-                  <div>
-                    <label
-                      htmlFor="location"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="location"
+                    className="block text-sm font-semibold text-slate-700 mb-1.5 mt-5"
+                  >
+                    Location
+                  </label>
+                  <div className="relative group">
+                    <select
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          location: value,
+                        }));
+                        sessionStorage.setItem("selectedLocation", value);
+                      }}
+                      className="pl-4 pr-10 w-full py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-800 text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
+                      required={false}
                     >
-                      Location
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="location"
-                        name="location"
-                        value={formData.location}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setFormData((prev) => ({
-                            ...prev,
-                            location: value,
-                          }));
-                          sessionStorage.setItem("selectedLocation", value); // store in session storage
-                        }}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-blue-500 focus:border-blue-500"
-                        required={!isLogin}
-                      >
-                        <option value="" disabled>
-                          Select Location
+                      <option value="" disabled>Select Location</option>
+                      {locations.map((loc) => (
+                        <option key={loc.id} value={loc.id}>
+                          {loc.LOCATION_NAME}
                         </option>
-                        {locations.map((loc) => (
-                          <option key={loc.id} value={loc.id}>
-                            {loc.LOCATION_NAME}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events.none">
-                        <ChevronDown className="h-5 w-5 text-gray-400" />
-                      </div>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                      <ChevronDown className="h-5 w-5" />
                     </div>
                   </div>
                 </div>
 
-                {isLogin && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        id="remember-me"
-                        name="remember-me"
-                        type="checkbox"
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <label
-                        htmlFor="remember-me"
-                        className="ml-2 block text-sm text-gray-700"
-                      >
-                        Remember me
-                      </label>
-                    </div>
-                    <div className="text-sm">
-                      <button
-                        type="button"
-                        className="font-medium text-blue-600 hover:text-blue-500"
-                        onClick={() =>
-                          toast.info(
-                            "Password reset functionality coming soon!"
-                          )
-                        }
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      name="remember-me"
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer transition-colors"
+                    />
+                    <label
+                      htmlFor="remember-me"
+                      className="ml-2.5 block text-sm font-medium text-slate-600 cursor-pointer"
+                    >
+                      Remember me
+                    </label>
                   </div>
-                )}
-              </>
+                  <button
+                    type="button"
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                    onClick={() => toast.info("Password reset functionality coming soon!")}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              </div>
 
-              <div>
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    loading && "opacity-75 cursor-not-allowed"
+                  className={`relative w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 overflow-hidden transition-all duration-300 transform hover:-translate-y-0.5 ${
+                    loading ? "opacity-90 cursor-not-allowed translate-y-0" : ""
                   }`}
                 >
-                  {loading
-                    ? "Processing..."
-                    : isLogin
-                    ? "Login"
-                    : "Create Account"}
+                  <span className={`relative z-10 flex items-center ${loading ? "opacity-0" : "opacity-100"}`}>
+                    Sign In
+                    <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </span>
+                  {loading && (
+                    <span className="absolute inset-0 z-20 flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                  )}
                 </button>
               </div>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                {isLogin
-                  ? "Don't have an account?"
-                  : "Already have an account?"}{" "}
-                <button
-                  type="button"
-                  onClick={toggleAuthMode}
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  {isLogin ? "Sign Up" : "Sign In"}
-                </button>
+            <div className="mt-8 text-center pt-6 border-t border-slate-100">
+              <p className="text-sm font-medium text-slate-500">
+                Account access is managed by your administrator.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Fleet Management System. All rights
-          reserved.
+        <div className="py-6 text-center text-xs font-semibold text-slate-400 flex justify-center space-x-4">
+          <span>&copy; {new Date().getFullYear()} Fleet Management System.</span>
+          <a href="#" className="hover:text-slate-600 transition-colors">Terms</a>
+          <a href="#" className="hover:text-slate-600 transition-colors">Privacy</a>
         </div>
       </div>
 
       {/* Image/Background Section - Hidden on mobile */}
-      <div className="hidden md:flex md:w-1/2 bg-blue-600">
-        <div className="flex items-center justify-center w-full h-full p-12">
-          <div className="text-white max-w-md">
-            <h2 className="text-3xl font-bold mb-6">
-              Manage Your Fleet with Confidence
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-900">
+        {/* Abstract shapes / Gradients */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-blob"></div>
+        <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] bg-indigo-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-[-20%] left-[20%] w-[60%] h-[60%] bg-purple-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-4000"></div>
+
+        {/* Pattern overlay */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50"></div>
+
+        <div className="relative z-10 flex flex-col justify-center w-full h-full p-16 lg:p-24 backdrop-blur-[2px]">
+          <div className="max-w-xl">
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
+              Manage Your Fleet with <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">Confidence</span>
             </h2>
-            <p className="text-blue-100 mb-6">
-              Our comprehensive fleet management system helps you track
-              vehicles, manage drivers, and optimize routes for maximum
-              efficiency.
+            <p className="text-lg text-slate-300 mb-12 font-light leading-relaxed">
+              Our comprehensive fleet management system helps you track vehicles, manage drivers, and optimize routes for maximum efficiency and reduced operational costs.
             </p>
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <CheckCircle className="w-6 h-6 mr-3 text-blue-200 flex-shrink-0" />
-                <p className="text-blue-100">
-                  Real-time vehicle tracking and analytics
-                </p>
+            
+            <div className="space-y-6">
+              {[
+                "Real-time vehicle tracking and advanced analytics",
+                "Comprehensive maintenance scheduling & alerts",
+                "Detailed reporting and fleet performance metrics"
+              ].map((text, i) => (
+                <div key={i} className="flex items-center transform transition-transform hover:translate-x-2 duration-300">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 mr-4 shadow-lg">
+                    <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0" />
+                  </div>
+                  <p className="text-slate-200 font-medium">{text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-16 pt-8 border-t border-white/10 flex items-center">
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-lg">
+                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-start">
-                <CheckCircle className="w-6 h-6 mr-3 text-blue-200 flex-shrink-0" />
-                <p className="text-blue-100">
-                  Comprehensive maintenance scheduling
-                </p>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="w-6 h-6 mr-3 text-blue-200 flex-shrink-0" />
-                <p className="text-blue-100">
-                  Detailed reporting and fleet performance metrics
-                </p>
+              <div className="ml-5">
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  ))}
+                </div>
+                <div className="text-sm text-slate-300 mt-1 font-medium">Trusted by 500+ companies</div>
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ const EquipmentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formData, setFormData] = useState({
     TERMINAL_ID: "",
     EQUIPMENT_NO: "",
@@ -89,13 +90,80 @@ const EquipmentDetails = () => {
     fetchVendors();
   }, []);
 
+  const getEquipmentFieldError = (name, value) => {
+    if (!value) return "";
+    const currentYear = new Date().getFullYear() + 1;
+    const validators = {
+      EQUIPMENT_NO: () =>
+        /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{1,4}$/.test(value)
+          ? ""
+          : "Use valid Indian vehicle no (e.g., UP78CN6949)",
+      VIN_NO: () =>
+        /^[A-HJ-NPR-Z0-9]{17}$/.test(value)
+          ? ""
+          : "VIN must be 17 chars (no I, O, Q)",
+      INSURANCE_NO: () =>
+        String(value).trim().length >= 6
+          ? ""
+          : "Insurance no should be at least 6 characters",
+      MANUFACTURING_YEAR: () =>
+        /^(19|20)\d{2}$/.test(String(value)) &&
+        Number(value) >= 1980 &&
+        Number(value) <= currentYear
+          ? ""
+          : `Enter valid year (1980-${currentYear})`,
+    };
+    return validators[name] ? validators[name]() : "";
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    if (!name) return;
+    const message = getEquipmentFieldError(name, value);
+    e.target.setCustomValidity(message);
+    if (message) {
+      e.target.reportValidity();
+      setFieldErrors((prev) => ({ ...prev, [name]: message }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validateEquipmentForm = () => {
+    const keys = ["EQUIPMENT_NO", "VIN_NO", "INSURANCE_NO", "MANUFACTURING_YEAR"];
+    const nextErrors = {};
+    keys.forEach((key) => {
+      const msg = getEquipmentFieldError(key, formData[key]);
+      if (msg) nextErrors[key] = msg;
+    });
+    setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
+    return Object.keys(nextErrors).length === 0;
+  };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === 'file') {
         setFormData({ ...formData, [name]: files[0] });
     } else {
-        setFormData({ ...formData, [name]: value });
+        let nextValue = value;
+
+        if (name === "EQUIPMENT_NO") {
+          nextValue = value.replace(/[\s-]/g, "").toUpperCase();
+        } else if (name === "VIN_NO") {
+          nextValue = value.replace(/\s/g, "").toUpperCase();
+        } else if (["ENG_NO", "ENG_TYPE", "RTO", "MANUFACTURER"].includes(name)) {
+          nextValue = value.toUpperCase();
+        } else if (["TERMINAL_ID", "COMPANY_ID", "DRIVER_ATTACH_ID"].includes(name)) {
+          nextValue = value.replace(/\D/g, "");
+        } else if (name === "MANUFACTURING_YEAR") {
+          nextValue = value.replace(/\D/g, "").slice(0, 4);
+        }
+
+        setFormData({ ...formData, [name]: nextValue });
+        if (fieldErrors[name]) {
+          setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+        }
     }
   };
 
@@ -153,6 +221,10 @@ const EquipmentDetails = () => {
     // Validate required fields
     if (!formData.EQUIPMENT_NO) {
       toast.error("Vehicle No is required");
+      return;
+    }
+    if (!validateEquipmentForm()) {
+      toast.error("Please fix highlighted vehicle fields");
       return;
     }
     
@@ -267,48 +339,79 @@ const EquipmentDetails = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Vehicle Master</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Equipment List */}
-        <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Vehicle List</h2>
+        <div className="order-2 lg:order-2 bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-gray-200 sticky top-0 z-10">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Vehicle List</h2>
+                <p className="text-sm text-slate-500">Select a vehicle to view details.</p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                  {equipment.length} total
+                </div>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setIsEditing(true);
+                  }}
+                  className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Add Vehicle
+                </button>
+              </div>
+            </div>
           </div>
           
-          <div className="divide-y divide-gray-200 max-h-[70vh] overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto p-3 space-y-2 bg-slate-50/40">
             {loading ? (
-              <div className="p-4 flex justify-center">
+              <div className="p-6 flex justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : equipment.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No vehicles found</div>
+              <div className="p-8 text-center text-slate-500">No vehicles found</div>
             ) : (
               equipment.map((equip) => (
                 <div 
                   key={equip.EQUIPMENT_ID} 
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${selectedEquipment?.EQUIPMENT_ID === equip.EQUIPMENT_ID ? 'bg-blue-50' : ''}`}
+                  className={`group rounded-2xl border p-4 cursor-pointer transition ${
+                    selectedEquipment?.EQUIPMENT_ID === equip.EQUIPMENT_ID
+                      ? "bg-white border-blue-200 shadow-sm"
+                      : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                  }`}
                   onClick={() => handleSelectEquipment(equip)}
                 >
-                  <div className="font-medium text-gray-900">{equip.EQUIPMENT_NO || 'N/A'}</div>
-                  <div className="text-sm text-gray-500">Type: {equip.EQUIPMENT_TYPE || 'N/A'}</div>
-                  <div className="text-sm text-gray-500">Model: {equip.MODEL || 'N/A'}</div>
-                  <div className="text-sm text-blue-600">Status: {equip.STATUS === 'A' ? 'Active' : 'Inactive'}</div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-black text-slate-900 truncate">
+                        {equip.EQUIPMENT_NO || "N/A"}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        <span className="font-bold">Type:</span> {equip.EQUIPMENT_TYPE || "N/A"}{" "}
+                        <span className="text-slate-300">|</span>{" "}
+                        <span className="font-bold">Model:</span> {equip.MODEL || "N/A"}
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black tracking-wide ${
+                        equip.STATUS === "A"
+                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {equip.STATUS === "A" ? "ACTIVE" : "INACTIVE"}
+                    </span>
+                  </div>
                 </div>
               ))
             )}
           </div>
-          
-          <div className="p-4 bg-gray-50 border-t border-gray-200">
-            <button 
-              onClick={() => { resetForm(); setIsEditing(true); }}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Add New Vehicle
-            </button>
-          </div>
         </div>
         
         {/* Equipment Form */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow">
+        <div className="order-1 lg:order-1 bg-white rounded-lg shadow">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
                   {isEditing ? (selectedEquipment ? "Edit Vehicle" : "Add New Vehicle") : "Vehicle Details"}
@@ -337,26 +440,16 @@ const EquipmentDetails = () => {
                 <p>Select a vehicle from the list or add a new one</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} onBlurCapture={handleFieldBlur} className="space-y-6">
                 {/* Basic Information */}
-                <div className="pt-4">
-                  <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Basic Information</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Terminal ID</label>
-                      <input
-                        type="number"
-                        name="TERMINAL_ID"
-                        value={formData.TERMINAL_ID}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Vehicle No*</label>
+	                <div className="pt-4">
+	                  <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Basic Information</h3>
+	                  
+	                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+	                    <input type="hidden" name="TERMINAL_ID" value={formData.TERMINAL_ID} />
+	                    
+	                    <div>
+	                      <label className="block text-sm font-medium text-gray-700">Vehicle No*</label>
                       <input
                         type="text"
                         name="EQUIPMENT_NO"
@@ -364,20 +457,29 @@ const EquipmentDetails = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="AA00AA0000"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.EQUIPMENT_NO ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.EQUIPMENT_NO && (
+                        <p className="mt-1 text-xs text-red-600">{fieldErrors.EQUIPMENT_NO}</p>
+                      )}
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Vehicle Type</label>
-                      <input
-                        type="text"
+                      <select
                         name="EQUIPMENT_TYPE"
                         value={formData.EQUIPMENT_TYPE}
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-                      />
+                      >
+                        <option value="">Select Type</option>
+                        <option value="TRAILER 20">Trailer 20</option>
+                        <option value="TRAILER 40">Trailer 40</option>
+                        <option value="TRUCK">Truck</option>
+                        <option value="DUMPER">Dumper</option>
+                      </select>
                     </div>
                     
                     <div>
@@ -407,11 +509,12 @@ const EquipmentDetails = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Manufacturer</label>
                       <input
-                        type="number"
+                        type="text"
                         name="MANUFACTURER"
                         value={formData.MANUFACTURER}
                         onChange={handleInputChange}
                         disabled={!isEditing}
+                        placeholder="e.g., ASHOK LEYLAND"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
@@ -424,6 +527,7 @@ const EquipmentDetails = () => {
                         value={formData.MODEL}
                         onChange={handleInputChange}
                         disabled={!isEditing}
+                        placeholder="e.g., 4019"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
@@ -436,8 +540,12 @@ const EquipmentDetails = () => {
                         value={formData.MANUFACTURING_YEAR}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="e.g., 2019"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.MANUFACTURING_YEAR ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.MANUFACTURING_YEAR && (
+                        <p className="mt-1 text-xs text-red-600">{fieldErrors.MANUFACTURING_YEAR}</p>
+                      )}
                     </div>
                     
                     <div>
@@ -473,20 +581,26 @@ const EquipmentDetails = () => {
                         value={formData.ENG_NO}
                         onChange={handleInputChange}
                         disabled={!isEditing}
+                        placeholder="e.g., CNPZ113267"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Engine Type</label>
-                      <input
-                        type="text"
+                      <select
                         name="ENG_TYPE"
                         value={formData.ENG_TYPE}
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-                      />
+                      >
+                        <option value="">Select Engine Type</option>
+                        <option value="DIESEL">Diesel</option>
+                        <option value="PETROL">Petrol</option>
+                        <option value="CNG">CNG</option>
+                        <option value="EV">EV</option>
+                      </select>
                     </div>
                     
                     <div>
@@ -497,8 +611,12 @@ const EquipmentDetails = () => {
                         value={formData.VIN_NO}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="17 chars, e.g., MB1TRDWB2CPNC1234"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.VIN_NO ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.VIN_NO && (
+                        <p className="mt-1 text-xs text-red-600">{fieldErrors.VIN_NO}</p>
+                      )}
                     </div>
                     
                     <div>
@@ -573,18 +691,23 @@ const EquipmentDetails = () => {
                         value={formData.INSURANCE_NO}
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                        placeholder="e.g., 0126616965"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 font-mono ${fieldErrors.INSURANCE_NO ? "border-red-400" : "border-gray-300"}`}
                       />
+                      {fieldErrors.INSURANCE_NO && (
+                        <p className="mt-1 text-xs text-red-600">{fieldErrors.INSURANCE_NO}</p>
+                      )}
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Insurance Vendor</label>
                       <input
-                        type="number"
+                        type="text"
                         name="INS_VENDOR"
                         value={formData.INS_VENDOR}
                         onChange={handleInputChange}
                         disabled={!isEditing}
+                        placeholder="e.g., ICICI LOMBARD"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
@@ -688,6 +811,7 @@ const EquipmentDetails = () => {
                         value={formData.RTO}
                         onChange={handleInputChange}
                         disabled={!isEditing}
+                        placeholder="e.g., KANPUR"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
@@ -809,14 +933,17 @@ const EquipmentDetails = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Driver Attach Status</label>
-                      <input
-                        type="text"
+                      <select
                         name="DRIVER_ATTCAH_STATUS"
                         value={formData.DRIVER_ATTCAH_STATUS}
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
-                      />
+                      >
+                        <option value="">Select Status</option>
+                        <option value="ATTACHED">Attached</option>
+                        <option value="DETACHED">Detached</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -857,6 +984,7 @@ const EquipmentDetails = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         rows="3"
+                        placeholder="e.g., Periodic service completed"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>

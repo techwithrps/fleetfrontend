@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import AdminDashboard from "./Pages/Admindashboard";
 import Login from "./Pages/Login";
 import AdminUsers from "./Pages/AdminUsers";
+import Header from "./Components/Header";
 import CustomerDashboard from "./Pages/CustomerDashboard";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
 import { RoleSidebar } from "./Components/RoleSidebar";
@@ -34,8 +35,8 @@ import ContainerAssignmentDashboard from "./Pages/Containeradminpage";
 import DailyAdvancePaymentsReport from "./Pages/DailyAdvancePaymentsReport";
 import ContainerMarginReport from "./Pages/ContainerMarginReport";
 import PaymentReceipts from "./Pages/PaymentReceipts";
-import RateCardManagement from "./Pages/RateCardManagement";
-import RateCardApproval from "./Pages/RateCardApproval";
+import EmailConfig from "./Pages/EmailConfig";
+import IamManagement from "./Pages/IamManagement";
 import TireMaster from "./Pages/TireMaster";
 import BedMaster from "./Pages/BedMaster";
 import BedAttachment from "./Pages/BedAttachment";
@@ -48,14 +49,13 @@ const DashboardLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-  };
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+  const toggleSidebar = () => setCollapsed(!collapsed);
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const toggleNotifications = () => setShowNotifications(!showNotifications);
+  const toggleUserMenu = () => setShowUserMenu(!showUserMenu);
 
   const sidebarProps = {
     collapsed,
@@ -67,18 +67,30 @@ const DashboardLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-slate-50 flex overflow-hidden w-full max-w-[100vw]">
       {/* Sidebar */}
       <RoleSidebar {...sidebarProps} />
 
       {/* Main Content */}
-      <main
-        className={`flex-1 transition-all duration-300 ease-in-out ${
+      <div
+        className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ease-in-out ${
           collapsed ? "md:ml-16" : "md:ml-64"
-        } md:min-w-0`}
+        }`}
       >
-        <div className="p-6">{React.cloneElement(children, sidebarProps)}</div>
-      </main>
+        <Header 
+          toggleMobileMenu={toggleMobileMenu}
+          mobileMenuOpen={mobileMenuOpen}
+          showNotifications={showNotifications}
+          toggleNotifications={toggleNotifications}
+          showUserMenu={showUserMenu}
+          toggleUserMenu={toggleUserMenu}
+          collapsed={collapsed}
+          toggleSidebar={toggleSidebar}
+        />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 p-6">
+          {React.cloneElement(children, sidebarProps)}
+        </main>
+      </div>
     </div>
   );
 };
@@ -97,6 +109,10 @@ const RoleRedirect = () => {
       return <Navigate to="/customer-dashboard" />;
     case "driver":
       return <Navigate to="/driver-dashboard" />;
+    case "accounts":
+      return <Navigate to="/accounts-dashboard" />;
+    case "reports & mis":
+      return <Navigate to="/reports-dashboard" />;
     default:
       return <Navigate to="/login" />;
   }
@@ -239,6 +255,26 @@ function App() {
             }
           />
           <Route
+            path="/admin/email-config"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <DashboardLayout>
+                  <EmailConfig />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/iam"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <DashboardLayout>
+                  <IamManagement />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/fleet-equipment"
             element={
               <ProtectedRoute allowedRoles={["Admin"]}>
@@ -328,16 +364,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/rate-approvals"
-            element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
-                <DashboardLayout>
-                  <RateCardApproval />
-                </DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
           {/* Customer route */}
           <Route
             path="/customer-dashboard"
@@ -345,6 +371,26 @@ function App() {
               <ProtectedRoute allowedRoles={["Customer"]}>
                 <DashboardLayout>
                   <CustomerDashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["Accounts"]}>
+                <DashboardLayout>
+                  <PaymentReceipts />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["Reports & MIS"]}>
+                <DashboardLayout>
+                  <TransportReports />
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -515,16 +561,6 @@ function App() {
               <ProtectedRoute allowedRoles={["Customer"]}>
                 <DashboardLayout>
                   <TransportReports></TransportReports>
-                </DashboardLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/rate-management"
-            element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
-                <DashboardLayout>
-                  <RateCardManagement />
                 </DashboardLayout>
               </ProtectedRoute>
             }

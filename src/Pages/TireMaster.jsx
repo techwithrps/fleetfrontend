@@ -153,24 +153,59 @@ const TireMaster = () => {
     return option ? option.label : statusCode || "N/A";
   };
 
+  const getStatusBadge = (statusCode) => {
+    const label = getStatusLabel(statusCode);
+    const color =
+      statusCode === "NW"
+        ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+        : statusCode === "RN"
+          ? "bg-blue-50 text-blue-700 ring-blue-100"
+          : statusCode === "RP"
+            ? "bg-amber-50 text-amber-700 ring-amber-100"
+            : "bg-slate-50 text-slate-700 ring-slate-100";
+
+    return (
+      <span
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${color}`}
+      >
+        {label}
+      </span>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Tyre Master</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Tyre Inventory</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="order-2 lg:order-2 bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-medium text-gray-900">Tyre Inventory</h2>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Select a tyre to view or edit details.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                resetForm();
+                setIsEditing(true);
+              }}
+              className="shrink-0 inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+              type="button"
+            >
+              Add Tyre
+            </button>
+          </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search tyre no/company"
-              className="mt-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="m-4 block w-[calc(100%-2rem)] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
-          </div>
 
-          <div className="divide-y divide-gray-200 max-h-[70vh] overflow-y-auto">
+          <div className="px-4 pb-4 max-h-[70vh] overflow-y-auto">
             {loading ? (
               <div className="p-4 text-center text-gray-500">Loading tyres...</div>
             ) : filteredTires.length === 0 ? (
@@ -180,38 +215,34 @@ const TireMaster = () => {
                 <div
                   key={tire.TIRE_ID}
                   onClick={() => handleSelectTire(tire)}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                    selectedTire?.TIRE_ID === tire.TIRE_ID ? "bg-blue-50" : ""
+                  className={`group mb-3 cursor-pointer rounded-xl border p-4 transition ${
+                    selectedTire?.TIRE_ID === tire.TIRE_ID
+                      ? "border-blue-200 bg-blue-50/60"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  <div className="font-medium text-gray-900">
-                    {tire.TIRE_NO || "N/A"}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 truncate">
+                        {tire.TIRE_NO || "N/A"}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-600 truncate">
+                        {tire.COMPANY || "N/A"}
+                      </div>
+                    </div>
+                    {getStatusBadge(tire.STATUS)}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {tire.COMPANY || "N/A"}
-                  </div>
-                  <div className="text-sm text-blue-600">
-                    {getStatusLabel(tire.STATUS)}
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                    <span>KM run: {tire.KM_RUN || "0"}</span>
+                    <span className="text-gray-400">ID #{tire.TIRE_ID}</span>
                   </div>
                 </div>
               ))
             )}
           </div>
-
-          <div className="p-4 bg-gray-50 border-t border-gray-200">
-            <button
-              onClick={() => {
-                resetForm();
-                setIsEditing(true);
-              }}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Add New Tyre
-            </button>
-          </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white rounded-lg shadow">
+        <div className="order-1 lg:order-1 bg-white rounded-lg shadow">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
               {isEditing

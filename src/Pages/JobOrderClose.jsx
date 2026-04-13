@@ -95,9 +95,14 @@ const JobOrderClose = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Job Order Close</h1>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="order-1 lg:order-1 bg-white rounded-lg shadow p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Close Job Order</h2>
+            <p className="text-sm text-gray-500">Settle advances and close open jobs.</p>
+          </div>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
             <label className="block text-sm font-medium text-gray-700">
               JO No
             </label>
@@ -114,7 +119,7 @@ const JobOrderClose = () => {
               ))}
             </select>
           </div>
-          <div>
+            <div>
             <label className="block text-sm font-medium text-gray-700">
               Total Advance
             </label>
@@ -126,7 +131,7 @@ const JobOrderClose = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <div>
+            <div>
             <label className="block text-sm font-medium text-gray-700">
               Balance Advance
             </label>
@@ -138,7 +143,7 @@ const JobOrderClose = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <div>
+            <div>
             <label className="block text-sm font-medium text-gray-700">
               JO Close Amount
             </label>
@@ -150,7 +155,7 @@ const JobOrderClose = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <div>
+            <div>
             <label className="block text-sm font-medium text-gray-700">
               Advance Refund
             </label>
@@ -164,7 +169,7 @@ const JobOrderClose = () => {
               <option value="NO">No</option>
             </select>
           </div>
-          <div>
+            <div>
             <label className="block text-sm font-medium text-gray-700">
               Trip Close Date
             </label>
@@ -176,7 +181,7 @@ const JobOrderClose = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <div className="md:col-span-3">
+            <div className="md:col-span-3">
             <label className="block text-sm font-medium text-gray-700">
               Remarks
             </label>
@@ -188,35 +193,38 @@ const JobOrderClose = () => {
               rows={3}
             />
           </div>
-          <div className="md:col-span-3 flex justify-end">
+            <div className="md:col-span-3 flex justify-end">
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Close Job Order
             </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Closed Job Orders
-          </h2>
+            </div>
+          </form>
         </div>
-        <div className="divide-y divide-gray-200">
+
+        <div className="order-2 lg:order-2 bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Closed Job Orders</h2>
+          </div>
+          <div className="p-4 max-h-[72vh] overflow-y-auto">
           {closes.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               No job order closes found
             </div>
           ) : (
             closes.map((close) => (
-              <div key={close.JO_CLOSE_ID} className="p-4">
-                <div className="font-medium text-gray-900">
+              <div key={close.JO_CLOSE_ID} className="mb-3 rounded-xl border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="font-semibold text-gray-900">
                   JO No: {close.JO_NO || "N/A"}
                 </div>
-                <div className="text-sm text-gray-500">
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-slate-50 text-slate-700 ring-1 ring-inset ring-slate-100">
+                    Closed
+                  </span>
+                </div>
+                <div className="text-sm text-gray-500 mt-2">
                   Trip Close Date:{" "}
                   {close.TRIP_CLOSE_DATE
                     ? new Date(close.TRIP_CLOSE_DATE).toLocaleDateString()
@@ -242,6 +250,7 @@ const JobOrderClose = () => {
               </div>
             ))
           )}
+          </div>
         </div>
       </div>
     </div>

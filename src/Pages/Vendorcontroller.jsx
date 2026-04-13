@@ -56,7 +56,18 @@ const VendorController = () => {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let nextValue = value;
+
+    if (["pan", "tan", "gstin", "ifsc", "vendor_code", "state_code"].includes(name)) {
+      nextValue = value.toUpperCase().trimStart();
+    } else if (["email_id1", "email_id2"].includes(name)) {
+      nextValue = value.toLowerCase().trimStart();
+    } else if (["pin_code", "contact_no", "mobile_no"].includes(name)) {
+      const digits = value.replace(/\D/g, "");
+      nextValue = name === "pin_code" ? digits.slice(0, 6) : digits.slice(0, 10);
+    }
+
+    setFormData({ ...formData, [name]: nextValue });
   };
 
   // Handle document uploads
@@ -331,19 +342,16 @@ const VendorController = () => {
                     name="vendor_code"
                     value={formData.vendor_code}
                     onChange={handleInputChange}
+                    placeholder="e.g., VND001"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
-                <div>
-                  <label className="block mb-1">Terminal ID</label>
-                  <input
-                    type="number"
-                    name="terminal_id"
-                    value={formData.terminal_id}
-                    onChange={handleInputChange}
-                    className="w-full border rounded px-2 py-1"
-                  />
-                </div>
+                <input
+                  type="hidden"
+                  name="terminal_id"
+                  value={formData.terminal_id}
+                  onChange={handleInputChange}
+                />
                 <div>
                   <label className="block mb-1">Email 1</label>
                   <input
@@ -351,6 +359,7 @@ const VendorController = () => {
                     name="email_id1"
                     value={formData.email_id1}
                     onChange={handleInputChange}
+                    placeholder="e.g., contact@vendor.com"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -361,6 +370,7 @@ const VendorController = () => {
                     name="email_id2"
                     value={formData.email_id2}
                     onChange={handleInputChange}
+                    placeholder="e.g., billing@vendor.com"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -371,6 +381,7 @@ const VendorController = () => {
                     name="contact_no"
                     value={formData.contact_no}
                     onChange={handleInputChange}
+                    placeholder="10-digit, e.g., 9876543210"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -381,6 +392,7 @@ const VendorController = () => {
                     name="mobile_no"
                     value={formData.mobile_no}
                     onChange={handleInputChange}
+                    placeholder="10-digit, e.g., 9876543210"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -425,6 +437,7 @@ const VendorController = () => {
                     name="pin_code"
                     value={formData.pin_code}
                     onChange={handleInputChange}
+                    placeholder="e.g., 208001"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -435,6 +448,7 @@ const VendorController = () => {
                     name="state_code"
                     value={formData.state_code}
                     onChange={handleInputChange}
+                    placeholder="e.g., UP"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -459,7 +473,8 @@ const VendorController = () => {
                     name="pan"
                     value={formData.pan}
                     onChange={handleInputChange}
-                    className="w-full border rounded px-2 py-1"
+                    placeholder="AAAAA0000A"
+                    className="w-full border rounded px-2 py-1 font-mono"
                   />
                 </div>
                 <div>
@@ -469,6 +484,7 @@ const VendorController = () => {
                     name="tan"
                     value={formData.tan}
                     onChange={handleInputChange}
+                    placeholder="e.g., LKOA12345B"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -489,6 +505,7 @@ const VendorController = () => {
                     name="gstin"
                     value={formData.gstin}
                     onChange={handleInputChange}
+                    placeholder="e.g., 09ABCDE1234F1Z5"
                     className="w-full border rounded px-2 py-1"
                   />
                 </div>
@@ -519,7 +536,8 @@ const VendorController = () => {
                     name="ifsc"
                     value={formData.ifsc}
                     onChange={handleInputChange}
-                    className="w-full border rounded px-2 py-1"
+                    placeholder="AAAA0AAAAAA"
+                    className="w-full border rounded px-2 py-1 font-mono"
                   />
                 </div>
                 <div>

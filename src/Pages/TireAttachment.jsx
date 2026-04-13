@@ -317,62 +317,112 @@ const TireAttachment = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Attached Tyres
-          </h2>
+        <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-gray-200">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Attached Tyres</h2>
+              <p className="text-sm text-slate-500">
+                Latest attachments first. Detach only when status is active.
+              </p>
+            </div>
+            <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+              {attachments.length} records
+            </div>
+          </div>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-100">
           {attachments.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-10 text-center text-slate-500">
               No tyre attachments found
             </div>
           ) : (
             attachments.map((attach) => (
               <div
                 key={attach.TIRE_ATTACH_ID}
-                className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                className="p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-4 hover:bg-slate-50/60 transition-colors"
               >
-                <div>
-                  <div className="font-medium text-gray-900">
-                    {attach.ATTACH_FOR === "BED" ? "Bed" : "Vehicle"}:{" "}
-                    {attach.ATTACH_FOR === "BED"
-                      ? bedMap[String(attach.BED_ID)]?.BED_NO || attach.BED_ID
-                      : equipmentMap[String(attach.EQUIPMENT_ID)]?.EQUIPMENT_NO ||
-                        attach.EQUIPMENT_ID}
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-extrabold text-slate-900">
+                      {attach.ATTACH_FOR === "BED" ? "Bed" : "Vehicle"}{" "}
+                      <span className="text-slate-400 font-bold">/</span>{" "}
+                      <span className="font-black">
+                        {attach.ATTACH_FOR === "BED"
+                          ? bedMap[String(attach.BED_ID)]?.BED_NO || attach.BED_ID
+                          : equipmentMap[String(attach.EQUIPMENT_ID)]?.EQUIPMENT_NO ||
+                            attach.EQUIPMENT_ID}
+                      </span>
+                    </div>
+                    {(() => {
+                      const status = String(attach.ATTACH_STATUS || "ATTACHED").toUpperCase();
+                      const isDetached = status === "DETACHED";
+                      return (
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black tracking-wide ${
+                            isDetached
+                              ? "bg-slate-100 text-slate-600"
+                              : "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100"
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      );
+                    })()}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Tire:{" "}
-                    {tireMap[String(attach.TIRE_ID)]?.TIRE_NO || attach.TIRE_ID}
+
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-xl bg-white border border-slate-100 px-3 py-2">
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        Tyre
+                      </div>
+                      <div className="text-sm font-semibold text-slate-700 truncate">
+                        {tireMap[String(attach.TIRE_ID)]?.TIRE_NO || attach.TIRE_ID}
+                      </div>
+                    </div>
+                    <div className="rounded-xl bg-white border border-slate-100 px-3 py-2">
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        Position
+                      </div>
+                      <div className="text-sm font-semibold text-slate-700 truncate">
+                        {positionMap[String(attach.POSITION_ID)]?.POSITION_CODE ||
+                          attach.POSITION_ID}
+                      </div>
+                    </div>
+                    <div className="rounded-xl bg-white border border-slate-100 px-3 py-2">
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        Timeline
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        <div>
+                          <span className="font-bold">Attached:</span>{" "}
+                          {formatDateTime(attach.ATTACH_DATE)}
+                        </div>
+                        <div>
+                          <span className="font-bold">Detached:</span>{" "}
+                          {formatDateTime(attach.DETACH_DATE)}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Position:{" "}
-                    {positionMap[String(attach.POSITION_ID)]?.POSITION_CODE ||
-                      attach.POSITION_ID}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Status: {attach.ATTACH_STATUS || "ATTACHED"}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Attached: {formatDateTime(attach.ATTACH_DATE)}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Detached: {formatDateTime(attach.DETACH_DATE)}
-                  </div>
+
                   {attach.REMARKS && (
-                    <div className="text-sm text-gray-500">
-                      Remarks: {attach.REMARKS}
+                    <div className="mt-3 text-sm text-slate-600">
+                      <span className="font-bold text-slate-700">Remarks:</span>{" "}
+                      {attach.REMARKS}
                     </div>
                   )}
                 </div>
-                {attach.ATTACH_STATUS !== "DETACHED" && (
-                  <button
-                    onClick={() => handleDetach(attach.TIRE_ATTACH_ID)}
-                    className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
-                  >
-                    Detach
-                  </button>
-                )}
+
+                <div className="flex items-center justify-end">
+                  {attach.ATTACH_STATUS !== "DETACHED" && (
+                    <button
+                      onClick={() => handleDetach(attach.TIRE_ATTACH_ID)}
+                      className="px-4 py-2 bg-rose-600 text-white rounded-xl hover:bg-rose-700 text-sm font-bold shadow-sm"
+                    >
+                      Detach
+                    </button>
+                  )}
+                </div>
               </div>
             ))
           )}
