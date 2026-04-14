@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 import {
   equipmentAPI,
   bedAPI,
@@ -46,6 +47,16 @@ const TireAttachment = () => {
 
   const formatDateTime = (value) =>
     value ? new Date(value).toLocaleString() : "N/A";
+
+  const formatDateOnly = (value) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
 
   const loadActiveTireUsage = async () => {
     try {
@@ -125,6 +136,8 @@ const TireAttachment = () => {
     }
   };
 
+
+
   useEffect(() => {
     loadData();
     loadActiveTireUsage();
@@ -163,6 +176,7 @@ const TireAttachment = () => {
         setRemarks("");
         loadAttachments();
         loadActiveTireUsage();
+        loadReportRows();
       } else {
         toast.error(response.error || "Failed to attach tire");
       }
@@ -181,6 +195,7 @@ const TireAttachment = () => {
         setRemarks("");
         loadAttachments();
         loadActiveTireUsage();
+        loadReportRows();
       } else {
         toast.error(response.error || "Failed to detach tire");
       }
@@ -188,6 +203,22 @@ const TireAttachment = () => {
       toast.error(error.message || "Failed to detach tire");
     }
   };
+
+  const getTargetNo = (row) => {
+    const attachFor = String(row.ATTACH_FOR || "").toUpperCase();
+    if (attachFor === "BED") {
+      return bedMap[String(row.BED_ID)]?.BED_NO || row.BED_ID || "";
+    }
+    return equipmentMap[String(row.EQUIPMENT_ID)]?.EQUIPMENT_NO || row.EQUIPMENT_ID || "";
+  };
+
+  const getPositionLabel = (row) => {
+    const pos = positionMap[String(row.POSITION_ID)];
+    if (!pos) return row.POSITION_ID || "";
+    return `${pos.POSITION_CODE || ""}${pos.POSITION_NAME ? ` (${pos.POSITION_NAME})` : ""}`;
+  };
+
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -427,7 +458,6 @@ const TireAttachment = () => {
             ))
           )}
         </div>
-      </div>
     </div>
   );
 };

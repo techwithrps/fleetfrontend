@@ -44,6 +44,7 @@ import TirePositionMaster from "./Pages/TirePositionMaster";
 import TireAttachment from "./Pages/TireAttachment";
 import JobOrder from "./Pages/JobOrder";
 import JobOrderClose from "./Pages/JobOrderClose";
+import TireAttachmentReport from "./Pages/TireAttachmentReport";
 
 const DashboardLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -345,6 +346,16 @@ function App() {
             }
           />
           <Route
+            path="/admin/tire-attachment-report"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <DashboardLayout>
+                  <TireAttachmentReport />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/job-order"
             element={
               <ProtectedRoute allowedRoles={["Admin"]}>
@@ -531,6 +542,16 @@ function App() {
               <ProtectedRoute allowedRoles={["Customer"]}>
                 <DashboardLayout>
                   <TireAttachment />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/tire-attachment-report"
+            element={
+              <ProtectedRoute allowedRoles={["Customer"]}>
+                <DashboardLayout>
+                  <TireAttachmentReport />
                 </DashboardLayout>
               </ProtectedRoute>
             }

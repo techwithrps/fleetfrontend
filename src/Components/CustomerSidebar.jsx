@@ -151,6 +151,12 @@ export function CustomerSidebar({
           path: "reports",
           description: "View Transport Reports",
         },
+        {
+          name: "Tyre Attachment Report",
+          icon: FileText,
+          path: "tire-attachment-report",
+          description: "View Tyre Movement History",
+        },
       ],
     },
   ];

@@ -178,6 +178,12 @@ export function AdminSidebar({
           path: "container-margin-report",
           description: "Container Profitability",
         },
+        {
+          name: "Tyre Attachment Report",
+          icon: FileText,
+          path: "tire-attachment-report",
+          description: "Tyre Movement History",
+        },
       ],
     },
   ];
