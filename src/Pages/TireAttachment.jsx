@@ -176,7 +176,6 @@ const TireAttachment = () => {
         setRemarks("");
         loadAttachments();
         loadActiveTireUsage();
-        loadReportRows();
       } else {
         toast.error(response.error || "Failed to attach tire");
       }
@@ -195,7 +194,6 @@ const TireAttachment = () => {
         setRemarks("");
         loadAttachments();
         loadActiveTireUsage();
-        loadReportRows();
       } else {
         toast.error(response.error || "Failed to detach tire");
       }
@@ -458,6 +456,7 @@ const TireAttachment = () => {
             ))
           )}
         </div>
+      </div>
     </div>
   );
 };
