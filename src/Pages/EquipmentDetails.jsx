@@ -60,6 +60,71 @@ const EquipmentDetails = () => {
     VENDER_ID: ""
   });
 
+  const getApiBaseForFiles = () => {
+    const raw = process.env.REACT_APP_API_URL || "http://localhost:4000";
+    return raw.replace(/\/api\/?$/i, "");
+  };
+
+  const getAbsoluteDocUrl = (docPath) => {
+    if (!docPath || typeof docPath !== "string") return "";
+    if (/^https?:\/\//i.test(docPath)) return docPath;
+    return `${getApiBaseForFiles()}/${docPath.replace(/^\/+/, "")}`;
+  };
+
+  const openProtectedDocument = async (docPath, label = "document", preferPdf = false) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login again to view this file.");
+        return;
+      }
+
+      const url = getAbsoluteDocUrl(docPath);
+      if (!url) {
+        toast.error("Invalid file URL.");
+        return;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to open ${label}`);
+      }
+
+      const blob = await response.blob();
+      const normalizedBlob =
+        preferPdf && (!blob.type || blob.type === "application/octet-stream")
+          ? new Blob([blob], { type: "application/pdf" })
+          : blob;
+      const blobUrl = window.URL.createObjectURL(normalizedBlob);
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+    } catch (error) {
+      console.error("Error opening protected document:", error);
+      toast.error(`Unable to open ${label}.`);
+    }
+  };
+
+  const renderViewDocButton = (docPath, label, preferPdf = false) => {
+    if (!docPath || typeof docPath !== "string") return null;
+    return (
+      <div className="mt-1 text-xs">
+        <button
+          type="button"
+          onClick={() => openProtectedDocument(docPath, label, preferPdf)}
+          className="text-blue-600 hover:underline font-bold"
+        >
+          {label}
+        </button>
+      </div>
+    );
+  };
+
   // Fetch all vehicles
   const fetchEquipment = async () => {
     setLoading(true);
@@ -449,7 +514,12 @@ const EquipmentDetails = () => {
                 <p>Select a vehicle from the list or add a new one</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} onBlurCapture={handleFieldBlur} className="space-y-6">
+              <form 
+                key={selectedEquipment ? selectedEquipment.EQUIPMENT_ID : 'new-form'}
+                onSubmit={handleSubmit} 
+                onBlurCapture={handleFieldBlur} 
+                className="space-y-6"
+              >
                 {/* Basic Information */}
 	                <div className="pt-4">
 	                  <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Basic Information</h3>
@@ -834,6 +904,7 @@ const EquipmentDetails = () => {
                         disabled={!isEditing}
                         className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
                       />
+                      {renderViewDocButton(formData.FITNESS_DOC, "View Current Fitness Doc", true)}
                     </div>
                     
                     <div>
@@ -857,6 +928,7 @@ const EquipmentDetails = () => {
                         disabled={!isEditing}
                         className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
                       />
+                      {renderViewDocButton(formData.RC_DOC, "View Current RC Doc", true)}
                     </div>
                     
                     <div>
@@ -868,6 +940,7 @@ const EquipmentDetails = () => {
                         disabled={!isEditing}
                         className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
                       />
+                      {renderViewDocButton(formData.INSURANCE_DOC, "View Current Insurance Doc", true)}
                     </div>
                     
                     <div>
@@ -879,6 +952,7 @@ const EquipmentDetails = () => {
                         disabled={!isEditing}
                         className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
                       />
+                      {renderViewDocButton(formData.PERMIT_A, "View Current Permit A", true)}
                     </div>
                     
                     <div>
@@ -890,6 +964,7 @@ const EquipmentDetails = () => {
                         disabled={!isEditing}
                         className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
                       />
+                      {renderViewDocButton(formData.PERMIT_B, "View Current Permit B", true)}
                     </div>
                     
                     <div>
@@ -983,6 +1058,7 @@ const EquipmentDetails = () => {
                         disabled={!isEditing}
                         className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
                       />
+                      {renderViewDocButton(formData.IMAGE, "View Current Vehicle Image")}
                     </div>
                     
                     <div className="md:col-span-2">

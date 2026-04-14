@@ -762,7 +762,11 @@ export const equipmentAPI = {
   // Create new equipment
   createEquipment: async (equipmentData) => {
     try {
-      const response = await api.post("/equipment", equipmentData);
+      const response = await api.post("/equipment", equipmentData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return response.data;
     } catch (error) {
       console.error("Error creating equipment:", error);
@@ -775,7 +779,12 @@ export const equipmentAPI = {
     try {
       const response = await api.put(
         `/equipment/${equipmentId}`,
-        equipmentData
+        equipmentData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
       return response.data;
     } catch (error) {
