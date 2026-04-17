@@ -22,13 +22,14 @@ export function CustomerSidebar({
   setActivePage,
   mobileMenuOpen,
   toggleMobileMenu,
+  handleLogout,
 }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [hoveredItem, setHoveredItem] = useState(null);
 
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const navSections = [
@@ -188,13 +189,6 @@ export function CustomerSidebar({
     setShowEditModal(true);
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      logout();
-      navigate("/login");
-    }
-  };
-
   const handleNavigation = (path) => {
     setActivePage(path);
     navigate(
@@ -267,9 +261,27 @@ export function CustomerSidebar({
                   {section.title}
                 </div>
               )}
-              {section.items.map((item) => (
-                <div
-                  key={item.path}
+              {section.items.map((item) => {
+                // Determine if user has access to this menu item
+                const hasAccess = (() => {
+                  if (!user) return false;
+                  if (user.role?.toLowerCase() === 'admin') return true;
+                  if (!user.pageNames) return false;
+                  // If pageNames has it explicitly, allow it
+                  if (user.pageNames.includes(item.name)) return true;
+                  // Handle alternative names mapping for safety
+                  if (item.name === 'Dashboard' && user.pageNames.includes('Admin Dashboard')) return true;
+                  if (item.name === 'Vehicle Master' && user.pageNames.includes('Fleet Equipment Master')) return true;
+                  if (item.name === 'Tyre Master' && user.pageNames.includes('Tire Master')) return true;
+                  if (item.name === 'Tyre Position Master' && user.pageNames.includes('Tire Position Master')) return true;
+                  return false;
+                })();
+
+                if (!hasAccess) return null; // Hide the item completely!
+
+                return (
+                  <div
+                    key={item.path}
                   className="relative"
                   onMouseEnter={() => setHoveredItem(item.path)}
                   onMouseLeave={() => setHoveredItem(null)}
@@ -319,7 +331,8 @@ export function CustomerSidebar({
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
               {!collapsed && section.title !== "Reports" && (
                 <div className="mx-3 pt-2">
                   <div className="border-b border-slate-800"></div>
@@ -377,9 +390,24 @@ export function CustomerSidebar({
                   <div className="px-3 pb-2 pt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
                     {section.title}
                   </div>
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.path}
+                  {section.items.map((item) => {
+                    const hasAccess = (() => {
+                      if (!user) return false;
+                      if (user.role?.toLowerCase() === 'admin') return true;
+                      if (!user.pageNames) return false;
+                      if (user.pageNames.includes(item.name)) return true;
+                      if (item.name === 'Dashboard' && user.pageNames.includes('Admin Dashboard')) return true;
+                      if (item.name === 'Vehicle Master' && user.pageNames.includes('Fleet Equipment Master')) return true;
+                      if (item.name === 'Tyre Master' && user.pageNames.includes('Tire Master')) return true;
+                      if (item.name === 'Tyre Position Master' && user.pageNames.includes('Tire Position Master')) return true;
+                      return false;
+                    })();
+
+                    if (!hasAccess) return null;
+
+                    return (
+                      <Link
+                        key={item.path}
                       to={
                         item.path === "dashboard"
                           ? "/customer-dashboard"
@@ -419,7 +447,8 @@ export function CustomerSidebar({
                         <div className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r"></div>
                       )}
                     </Link>
-                  ))}
+                    );
+                  })}
                   {section.title !== "Reports" && (
                     <div className="mx-3 pt-2">
                       <div className="border-b border-slate-800"></div>

@@ -18,39 +18,67 @@ export default function Login() {
     location: "",
   });
   const [loading, setLoading] = useState(false);
+  const [fetchingLocations, setFetchingLocations] = useState(false);
   const [error, setError] = useState("");
 
-  // Fixed useEffect in your Login component
-  useEffect(() => {
-    const loadLocations = async () => {
-      try {
-        console.log("Starting to load locations...");
-        const data = await locationAPI.getAllLocations();
-        console.log("Locations loaded successfully:", data);
-        setLocations(data);
-      } catch (err) {
-        console.error("Failed to load locations:", err);
-        // Show user-friendly error
-        toast.error("Failed to load locations. Please refresh the page.");
-        setError("Failed to load locations");
+  const handleFetchLocations = async () => {
+    if (!formData.email || !formData.password) {
+      toast.warn("Please enter both email and password first");
+      return;
+    }
+
+    setFetchingLocations(true);
+    setError("");
+    try {
+      const response = await authAPI.getUserLocations({
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response && response.success) {
+        setLocations(response.locations || []);
+        if (response.locations.length > 0) {
+          // Auto-select if only one location
+          if (response.locations.length === 1) {
+            setFormData(prev => ({ ...prev, location: response.locations[0].id }));
+            sessionStorage.setItem("selectedLocation", response.locations[0].id);
+          }
+          toast.success("Access verified! Please select your location.");
+        } else {
+          setError("No locations assigned to this account.");
+        }
       }
-    };
-    loadLocations();
-  }, []);
+    } catch (err) {
+      console.error("Access check error:", err);
+      const msg = typeof err === 'string' ? err : err.message || "Invalid credentials or access error";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setFetchingLocations(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Reset locations if credentials change
+    if (name === 'email' || name === 'password') {
+      if (locations.length > 0) setLocations([]);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.location) {
+      toast.error("Please select a location first");
+      return;
+    }
     setLoading(true);
     setError("");
 
     try {
-      const { email, password } = formData;
-      const response = await authAPI.login({ email, password });
+      const { email, password, location } = formData;
+      const response = await authAPI.login({ email, password, location });
 
       if (response && response.token) {
         const token = response.token;
@@ -59,28 +87,24 @@ export default function Login() {
         setAuthToken(token);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", token);
+        // Ensure the selected location is saved for global use
+        sessionStorage.setItem("selectedLocation", location);
+        
+        const selectedLocObj = locations.find(l => String(l.id) === String(location));
+        const locationName = selectedLocObj ? selectedLocObj.name : "";
+        sessionStorage.setItem("selectedLocationName", locationName);
 
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        toast.success(`Welcome back, ${user.name || user.email}!`, {
+        toast.success(`Welcome back ${user.name}! Accessing ${locationName}`, {
           autoClose: 3000,
           position: "top-right",
         });
 
         setTimeout(() => {
-          const userRole = user?.role;
-          if (userRole === "Admin") {
+          const userRole = user?.role?.toLowerCase();
+          if (userRole === "admin") {
             window.location.href = "/admin-dashboard";
-          } else if (userRole === "Customer") {
-            window.location.href = "/customer-dashboard";
-          } else if (userRole === "Driver") {
-            window.location.href = "/driver-dashboard";
-          } else if (userRole === "Accounts") {
-            window.location.href = "/accounts-dashboard";
-          } else if (userRole === "Reports & MIS") {
-            window.location.href = "/reports-dashboard";
           } else {
-            window.location.href = "/dashboard";
+            window.location.href = "/customer-dashboard";
           }
         }, 1000);
       } else {
@@ -88,26 +112,12 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Authentication error:", err);
-
       let errorMessage = "Authentication failed. Please try again.";
-
-      if (typeof err === "string") {
-        errorMessage = err;
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
-      } else if (err.error) {
-        errorMessage = err.error;
-      }
-
+      if (typeof err === "string") errorMessage = err;
+      else if (err.message) errorMessage = err.message;
+      
       setError(errorMessage);
-      toast.error(`Login Failed: ${errorMessage}`, {
-        position: "top-right",
-        autoClose: 5000,
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -212,41 +222,67 @@ export default function Login() {
                   </div>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="location"
-                    className="block text-sm font-semibold text-slate-700 mb-1.5 mt-5"
+                {locations.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={handleFetchLocations}
+                    disabled={fetchingLocations || !formData.email || !formData.password}
+                    className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    Location
-                  </label>
-                  <div className="relative group">
-                    <select
-                      id="location"
-                      name="location"
-                      value={formData.location}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          location: value,
-                        }));
-                        sessionStorage.setItem("selectedLocation", value);
-                      }}
-                      className="pl-4 pr-10 w-full py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-800 text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
-                      required={false}
+                    {fetchingLocations ? (
+                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      "Verify & Fetch Locations"
+                    )}
+                  </button>
+                )}
+
+                {locations.length > 0 && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label
+                      htmlFor="location"
+                      className="block text-sm font-semibold text-slate-700 mb-1.5"
                     >
-                      <option value="" disabled>Select Location</option>
-                      {locations.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {loc.LOCATION_NAME}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                      <ChevronDown className="h-5 w-5" />
+                      Selected Access Location
+                    </label>
+                    <div className="relative group">
+                      <select
+                        id="location"
+                        name="location"
+                        value={formData.location}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            location: value,
+                          }));
+                          sessionStorage.setItem("selectedLocation", value);
+                        }}
+                        className="pl-4 pr-10 w-full py-3 bg-blue-50/30 border border-blue-200 rounded-xl text-slate-800 text-sm appearance-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none font-bold"
+                        required
+                      >
+                        <option value="" disabled>Choose Location</option>
+                        {locations.map((loc) => (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-blue-500">
+                        <ChevronDown className="h-5 w-5" />
+                      </div>
                     </div>
+                    {locations.length > 1 && (
+                      <p className="mt-1.5 text-[10px] text-slate-400 font-medium italic">
+                        Multiple locations found. Please select one to proceed.
+                      </p>
+                    )}
                   </div>
-                </div>
+                )}
+
 
                 <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center">

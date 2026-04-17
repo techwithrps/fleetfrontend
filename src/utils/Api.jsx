@@ -92,6 +92,7 @@ export const isValidTokenFormat = (token) => {
 export const clearAuthData = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  sessionStorage.clear(); // Clear terminal selection and other session data
   delete api.defaults.headers.common["Authorization"];
 };
 
@@ -104,6 +105,14 @@ export const authAPI = {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         localStorage.setItem("token", response.data.token);
       }
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  getUserLocations: async (credentials) => {
+    try {
+      const response = await api.post("/auth/user-locations", credentials);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

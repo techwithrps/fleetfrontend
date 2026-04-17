@@ -9,6 +9,7 @@ import { AdminSidebar } from "../Components/Adminsidebar";
 // Add this import at the top with other imports
 import EquipmentDetails from "./EquipmentDetails";
 import PaymentReceipts from "./PaymentReceipts";
+import LogoutModal from "../Components/LogoutModal";
 
 const AdminLayout = ({ children }) => {
   // Sidebar states
@@ -20,6 +21,7 @@ const AdminLayout = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Get user data from auth context
   const { user, logout } = useAuth();
@@ -75,10 +77,23 @@ const AdminLayout = ({ children }) => {
     setSearchQuery(e.target.value);
     console.log("Searching for:", e.target.value);
   }, []);
-  const handleLogout = useCallback(() => logout(), [logout]);
+  const handleLogoutClick = useCallback(() => {
+    setShowLogoutModal(true);
+    setShowUserMenu(false);
+  }, []);
+
+  const handleConfirmLogout = useCallback(() => {
+    setShowLogoutModal(false);
+    logout();
+  }, [logout]);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
+      <LogoutModal 
+        isOpen={showLogoutModal} 
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+      />
       {/* Sidebar */}
       <AdminSidebar
         collapsed={collapsed}
@@ -87,6 +102,7 @@ const AdminLayout = ({ children }) => {
         setActivePage={setActivePage}
         mobileMenuOpen={mobileMenuOpen}
         toggleMobileMenu={toggleMobileMenu}
+        handleLogout={handleLogoutClick}
       />
 
       {/* Main Content */}
@@ -106,7 +122,7 @@ const AdminLayout = ({ children }) => {
           showUserMenu={showUserMenu}
           toggleUserMenu={toggleUserMenu}
           user={user}
-          handleLogout={handleLogout}
+          handleLogout={handleLogoutClick}
           collapsed={collapsed}
           toggleSidebar={toggleSidebar}
         />

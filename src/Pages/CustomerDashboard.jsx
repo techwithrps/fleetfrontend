@@ -480,7 +480,7 @@ export default function CustomerDashboard({
           <div className="mb-8">
             <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Dashboard Overview</h2>
             <p className="mt-2 text-sm font-medium text-slate-500">
-              Welcome back, <span className="text-blue-600">{user?.name || "Customer"}</span>! Request services and manage your shipments efficiently.
+              Welcome back to <span className="text-emerald-600 font-bold">{sessionStorage.getItem("selectedLocationName") || "Terminal"}</span>, <span className="text-blue-600">{user?.name || "Customer"}</span>! Request services and manage your shipments efficiently.
             </p>
           </div>
           <StatsCards />

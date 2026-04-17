@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { equipmentAPI, vendorAPI } from "../utils/Api";
+import { useAuth } from "../contexts/AuthContext";
 
 const EquipmentDetails = () => {
   const getErrorMessage = (error, fallback) => {
@@ -11,6 +12,10 @@ const EquipmentDetails = () => {
     if (error?.message) return error.message;
     return fallback;
   };
+
+  const { user } = useAuth();
+  const permissions = user?.permissions?.['Fleet Equipment Master'] || { can_view: 0, can_create: 0, can_edit: 0 };
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   const [equipment, setEquipment] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -426,15 +431,17 @@ const EquipmentDetails = () => {
                 <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
                   {equipment.length} total
                 </div>
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setIsEditing(true);
-                  }}
-                  className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Add Vehicle
-                </button>
+                {!!permissions.can_create && (
+                  <button
+                    onClick={() => {
+                      resetForm();
+                      setIsEditing(true);
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Add Vehicle
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -492,18 +499,25 @@ const EquipmentDetails = () => {
             </h2>
             {selectedEquipment && !isEditing && (
               <div className="flex space-x-2">
-                <button 
-                  onClick={() => setIsEditing(true)}
-                  className="py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm"
-                >
-                  Edit
-                </button>
-                <button 
-                  onClick={handleDeleteEquipment}
-                  className="py-1 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm"
-                >
-                  Delete
-                </button>
+                {!!permissions.can_edit && (
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm"
+                  >
+                    Edit
+                  </button>
+                )}
+                {/* Admin can Delete, Customer can only Disable (Soft-delete) */}
+                {(isAdmin || (!!permissions.can_edit)) && (
+                  <button 
+                    onClick={handleDeleteEquipment}
+                    className={`py-1 px-3 text-white rounded-md focus:outline-none focus:ring-offset-2 text-sm ${
+                      isAdmin ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"
+                    }`}
+                  >
+                    {isAdmin ? "Delete" : "Disable"}
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -45,6 +45,7 @@ import TireAttachment from "./Pages/TireAttachment";
 import JobOrder from "./Pages/JobOrder";
 import JobOrderClose from "./Pages/JobOrderClose";
 import TireAttachmentReport from "./Pages/TireAttachmentReport";
+import LogoutModal from "./Components/LogoutModal";
 
 const DashboardLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -52,11 +53,24 @@ const DashboardLayout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const toggleSidebar = () => setCollapsed(!collapsed);
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const toggleNotifications = () => setShowNotifications(!showNotifications);
   const toggleUserMenu = () => setShowUserMenu(!showUserMenu);
+
+  const { logout } = useAuth();
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+    setShowUserMenu(false); // Close dropdown if open
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+  };
 
   const sidebarProps = {
     collapsed,
@@ -65,10 +79,16 @@ const DashboardLayout = ({ children }) => {
     setActivePage,
     mobileMenuOpen,
     toggleMobileMenu,
+    handleLogout: handleLogoutClick,
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex overflow-hidden w-full max-w-[100vw]">
+      <LogoutModal 
+        isOpen={showLogoutModal} 
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+      />
       {/* Sidebar */}
       <RoleSidebar {...sidebarProps} />
 
@@ -83,10 +103,9 @@ const DashboardLayout = ({ children }) => {
           mobileMenuOpen={mobileMenuOpen}
           showNotifications={showNotifications}
           toggleNotifications={toggleNotifications}
-          showUserMenu={showUserMenu}
-          toggleUserMenu={toggleUserMenu}
           collapsed={collapsed}
           toggleSidebar={toggleSidebar}
+          handleLogout={handleLogoutClick}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 p-6">
           {React.cloneElement(children, sidebarProps)}
@@ -278,7 +297,7 @@ function App() {
           <Route
             path="/admin/fleet-equipment"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Fleet Equipment Master">
                 <DashboardLayout>
                   <EquipmentDetails />
                 </DashboardLayout>
@@ -288,7 +307,7 @@ function App() {
           <Route
             path="/admin/drivers"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Driver Master">
                 <DashboardLayout>
                   <DriverDetails />
                 </DashboardLayout>
@@ -298,7 +317,7 @@ function App() {
           <Route
             path="/admin/tire-master"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Tire Master">
                 <DashboardLayout>
                   <TireMaster />
                 </DashboardLayout>
@@ -318,7 +337,7 @@ function App() {
           <Route
             path="/admin/bed-master"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Bed Master">
                 <DashboardLayout>
                   <BedMaster />
                 </DashboardLayout>
@@ -358,7 +377,7 @@ function App() {
           <Route
             path="/admin/job-order"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Job order">
                 <DashboardLayout>
                   <JobOrder />
                 </DashboardLayout>
@@ -469,7 +488,7 @@ function App() {
           <Route
             path="/customer/vehicle-master"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Fleet Equipment Master">
                 <DashboardLayout>
                   <EquipmentDetails />
                 </DashboardLayout>
@@ -489,7 +508,7 @@ function App() {
           <Route
             path="/customer/driver-master"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Driver Master">
                 <DashboardLayout>
                   <DriverDetails />
                 </DashboardLayout>

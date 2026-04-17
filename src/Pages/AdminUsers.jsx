@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { userAPI } from "../utils/Api"; // Import the specific API methods
+import api, { userAPI } from "../utils/Api"; // Import the specific API methods
 import { useAuth } from "../contexts/AuthContext";
-import { Users, Search, RefreshCw, UserPlus, X, Mail, Phone, Lock, Shield, User } from "lucide-react";
+import { Users, Search, RefreshCw, UserPlus, X, Mail, Phone, Lock, Shield, User, CheckSquare } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 // Modal Component for Add/Edit User
@@ -154,6 +154,345 @@ const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = fals
   );
 };
 
+// Access Modal (Give Role Checkboxes)
+const AccessModal = ({ isOpen, onClose, user }) => {
+  const [locations, setLocations] = useState([]);
+  const [pages, setPages] = useState([]);
+  // configs: [{ id: number, locs: string[], pages: number[] }]
+  const [configs, setConfigs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !user) return;
+    
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [locRes, pageRes, accessRes] = await Promise.all([
+          api.get("/access/locations"),
+          api.get("/access/pages"),
+          api.get(`/access/user/${user.id}`)
+        ]);
+        
+        const locs = locRes.data.data || [];
+        setLocations(locs);
+        setPages(pageRes.data.data || []);
+        
+        const initialSelections = accessRes.data.data || [];
+        
+        // Group existing selections into configs
+        if (initialSelections.length > 0) {
+          // 1. Map locs to their pages with permissions
+          // Selection key: location_id
+          // Page info: { page_id, can_view, can_create, can_edit }
+          const locToPages = {};
+          initialSelections.forEach(s => {
+            const l = String(s.location_id);
+            if (!locToPages[l]) locToPages[l] = [];
+            locToPages[l].push({
+              page_id: Number(s.page_id),
+              can_view: !!s.can_view,
+              can_create: !!s.can_create,
+              can_edit: !!s.can_edit
+            });
+          });
+          
+          // 2. Group by identical page configurations
+          const configMap = {};
+          Object.keys(locToPages).forEach(l => {
+            // Create a stable string representation of pages + permissions
+            const pStr = locToPages[l]
+              .sort((a,b) => a.page_id - b.page_id)
+              .map(p => `${p.page_id}:${p.can_view?1:0}${p.can_create?1:0}${p.can_edit?1:0}`)
+              .join("|");
+            
+            if (!configMap[pStr]) configMap[pStr] = [];
+            configMap[pStr].push(l);
+          });
+          
+          // 3. Create configs array
+          const newConfigs = Object.keys(configMap).map((pStr, idx) => {
+            const pageData = pStr.split("|").filter(s => s).map(s => {
+              const [pid, perms] = s.split(":");
+              return {
+                page_id: Number(pid),
+                can_view: perms[0] === '1',
+                can_create: perms[1] === '1',
+                can_edit: perms[2] === '1'
+              };
+            });
+            return {
+              id: Date.now() + idx,
+              locs: configMap[pStr],
+              pages: pageData
+            };
+          });
+          setConfigs(newConfigs.length > 0 ? newConfigs : [{ id: Date.now(), locs: [], pages: [] }]);
+        } else {
+          // Blank config
+          setConfigs([{ id: Date.now(), locs: [], pages: [] }]);
+        }
+      } catch (err) {
+        toast.error("Failed to load access config");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [isOpen, user]);
+
+  const addConfigBlock = () => {
+    setConfigs([...configs, { id: Date.now(), locs: [], pages: [] }]);
+  };
+
+  const removeConfigBlock = (id) => {
+    setConfigs(configs.filter(c => c.id !== id));
+  };
+
+  const togglePermission = (configId, pageId, type) => {
+    setConfigs(configs.map(c => {
+      if (c.id === configId) {
+        const pageIdx = c.pages.findIndex(p => p.page_id === pageId);
+        let nextPages = [...c.pages];
+        
+        if (pageIdx === -1) {
+          // Add new page entry with only the selected permission
+          nextPages.push({
+            page_id: pageId,
+            can_view: type === 'view',
+            can_create: type === 'create',
+            can_edit: type === 'edit'
+          });
+        } else {
+          // Toggle existing permission
+          const p = nextPages[pageIdx];
+          const nextVal = !p[`can_${type}`];
+          nextPages[pageIdx] = { ...p, [`can_${type}`]: nextVal };
+          
+          // If all permissions are false, remove the page entry
+          if (!nextPages[pageIdx].can_view && !nextPages[pageIdx].can_create && !nextPages[pageIdx].can_edit) {
+            nextPages = nextPages.filter((_, i) => i !== pageIdx);
+          }
+        }
+        
+        return { ...c, pages: nextPages };
+      }
+      return c;
+    }));
+  };
+
+  const toggleLocation = (configId, locId) => {
+    // A location can only be in one config block to avoid conflict
+    setConfigs(configs.map(c => {
+      if (c.id === configId) {
+        const hasLoc = c.locs.includes(locId);
+        return {
+          ...c,
+          locs: hasLoc ? c.locs.filter(l => l !== locId) : [...c.locs, locId]
+        };
+      } else {
+        // Remove this location from other blocks if it exists
+        return {
+          ...c,
+          locs: c.locs.filter(l => l !== locId)
+        };
+      }
+    }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Flatten configs into assignments
+      const assignments = [];
+      configs.forEach(c => {
+        c.locs.forEach(locId => {
+          c.pages.forEach(p => {
+            assignments.push({ 
+              location_id: Number(locId), 
+              page_id: Number(p.page_id),
+              can_view: p.can_view ? 1 : 0,
+              can_create: p.can_create ? 1 : 0,
+              can_edit: p.can_edit ? 1 : 0
+            });
+          });
+        });
+      });
+      
+      const res = await api.post(`/access/user/${user.id}`, { assignments });
+      if (res.data?.success) {
+        toast.success("Access permissions updated successfully!");
+        onClose();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to save access");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50 flex-shrink-0">
+          <div>
+            <h3 className="text-xl font-bold text-slate-800">Assign Operations Roles</h3>
+            <p className="text-xs font-semibold text-slate-500 uppercase mt-1 tracking-wider">For Customer: {user?.name}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
+            <X className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="p-12 text-center text-slate-400 font-medium animate-pulse">Loading access configuration...</div>
+        ) : (
+          <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-8 bg-slate-50/30">
+            
+            {configs.map((config, index) => (
+              <div key={config.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">
+                      Select Locations for Configuration {index + 1}
+                    </label>
+                    <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto custom-scrollbar pr-2 pb-1">
+                      {locations.map(loc => {
+                        const locIdStr = String(loc.location_id);
+                        const isSelectedHere = config.locs.includes(locIdStr);
+                        const isSelectedElsewhere = configs.some(c => c.id !== config.id && c.locs.includes(locIdStr));
+                        
+                        return (
+                          <button
+                            key={loc.location_id}
+                            onClick={() => toggleLocation(config.id, locIdStr)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                              isSelectedHere 
+                                ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                                : isSelectedElsewhere
+                                  ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50'
+                                  : 'bg-white border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-600'
+                            }`}
+                            title={isSelectedElsewhere ? "Assigned in another block" : ""}
+                          >
+                            {loc.LOCATION_NAME}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {configs.length > 1 && (
+                    <button
+                      onClick={() => removeConfigBlock(config.id)}
+                      className="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors mt-2 sm:mt-0"
+                    >
+                      <X className="w-4 h-4" /> Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-5 overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="text-left py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Application Page</th>
+                        <th className="text-center py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">View</th>
+                        <th className="text-center py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">Create</th>
+                        <th className="text-center py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">Edit</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {pages.map(page => {
+                        const pageEntry = config.pages.find(p => p.page_id === Number(page.PAGE_ID));
+                        const canView = !!pageEntry?.can_view;
+                        const canCreate = !!pageEntry?.can_create;
+                        const canEdit = !!pageEntry?.can_edit;
+                        const hasNoLoc = config.locs.length === 0;
+
+                        return (
+                          <tr key={page.PAGE_ID} className="group hover:bg-slate-50/50 transition-colors">
+                            <td className="py-3 pr-4">
+                              <span className={`text-sm font-semibold ${hasNoLoc ? 'text-slate-300' : 'text-slate-700'}`}>{page.PAGE_NAME}</span>
+                              <span className="block text-[10px] text-slate-400 uppercase tracking-tight">{page.MODULE_GROUP}</span>
+                            </td>
+                            <td className="py-3 text-center">
+                              <button
+                                disabled={hasNoLoc}
+                                onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'view')}
+                                className={`mx-auto w-6 h-6 rounded flex items-center justify-center transition-all ${
+                                  canView ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                                } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                {canView && <CheckSquare className="w-4 h-4" />}
+                              </button>
+                            </td>
+                            <td className="py-3 text-center">
+                              <button
+                                disabled={hasNoLoc}
+                                onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'create')}
+                                className={`mx-auto w-6 h-6 rounded flex items-center justify-center transition-all ${
+                                  canCreate ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                                } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                {canCreate && <CheckSquare className="w-4 h-4" />}
+                              </button>
+                            </td>
+                            <td className="py-3 text-center">
+                              <button
+                                disabled={hasNoLoc}
+                                onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'edit')}
+                                className={`mx-auto w-6 h-6 rounded flex items-center justify-center transition-all ${
+                                  canEdit ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                                } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                {canEdit && <CheckSquare className="w-4 h-4" />}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+
+            <button
+              onClick={addConfigBlock}
+              className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 hover:border-blue-400 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+            >
+              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                <span className="text-lg leading-none mb-0.5">+</span>
+              </div>
+              Create Another Permissions Group
+            </button>
+
+          </div>
+        )}
+
+        <div className="p-5 border-t border-slate-100 bg-slate-50 flex gap-3 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-sm rounded-xl transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || configs.every(c => c.locs.length === 0)}
+            className="flex-[2] py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-200 transition-all disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Assigned Roles"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -164,6 +503,10 @@ export default function AdminUsers() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Access Modal states
+  const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+  const [accessTargetUser, setAccessTargetUser] = useState(null);
 
   const { user } = useAuth();
   const location = useLocation();
@@ -258,6 +601,14 @@ export default function AdminUsers() {
       u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const customers = filteredUsers.filter(u => u.role?.toLowerCase() === 'customer');
+  const admins = filteredUsers.filter(u => u.role?.toLowerCase() === 'admin');
+
+  const handleGiveRole = (user) => {
+    setAccessTargetUser(user);
+    setIsAccessModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -297,71 +648,158 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Full Identity</th>
-                <th className="px-6 py-4">Contact Info</th>
-                <th className="px-6 py-4">Role Access</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        {u.name?.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-slate-800">{u.name}</div>
-                        <div className="text-xs text-slate-400">ID: #{u.id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-600">{u.email}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{u.phone || "No phone"}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <select
-                      className={`px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest rounded-lg border-0 ring-1 ring-inset transition-all cursor-pointer ${
-                        u.role?.toLowerCase() === "admin"
-                          ? "bg-purple-50 text-purple-700 ring-purple-100"
-                          : "bg-blue-50 text-blue-700 ring-blue-100"
-                      }`}
-                      value={u.role?.toLowerCase()}
-                      onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
-                    >
-                      <option value="customer">Customer</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedUser(u);
-                        setIsModalOpen(true);
-                      }}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(u.id)}
-                      className="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-all"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="space-y-8">
+        
+        {/* CUSTOMERS SECTION (Top) */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 mb-4 px-2">Customers ({customers.length})</h2>
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4">Full Identity</th>
+                    <th className="px-6 py-4">Contact Info</th>
+                    <th className="px-6 py-4">Role Access</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {customers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                            {u.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-800">{u.name}</div>
+                            <div className="text-xs text-slate-400">ID: #{u.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-slate-600">{u.email}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{u.phone || "No phone"}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <select
+                          className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest rounded-lg border-0 ring-1 ring-inset transition-all cursor-pointer bg-blue-50 text-blue-700 ring-blue-100"
+                          value={u.role?.toLowerCase()}
+                          onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
+                        >
+                          <option value="customer">Customer</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button
+                          onClick={() => handleGiveRole(u)}
+                          className="text-xs font-bold text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Give Role
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setIsModalOpen(true);
+                          }}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {customers.length === 0 && (
+                    <tr>
+                      <td colSpan="4" className="text-center py-6 text-slate-400">No customers found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+
+        {/* ADMINS SECTION (Bottom) */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 mb-4 px-2">Administrators ({admins.length})</h2>
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4">Full Identity</th>
+                    <th className="px-6 py-4">Contact Info</th>
+                    <th className="px-6 py-4">Role Access</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {admins.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                            {u.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-800">{u.name}</div>
+                            <div className="text-xs text-slate-400">ID: #{u.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-slate-600">{u.email}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{u.phone || "No phone"}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <select
+                          className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest rounded-lg border-0 ring-1 ring-inset transition-all cursor-pointer bg-purple-50 text-purple-700 ring-purple-100"
+                          value={u.role?.toLowerCase()}
+                          onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
+                        >
+                          <option value="customer">Customer</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setIsModalOpen(true);
+                          }}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {admins.length === 0 && (
+                    <tr>
+                      <td colSpan="4" className="text-center py-6 text-slate-400">No administrators found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <UserModal
@@ -370,6 +808,12 @@ export default function AdminUsers() {
         onSubmit={handleModalSubmit}
         user={selectedUser}
         isSubmitting={isSubmitting}
+      />
+
+      <AccessModal 
+        isOpen={isAccessModalOpen}
+        onClose={() => setIsAccessModalOpen(false)}
+        user={accessTargetUser}
       />
     </div>
   );

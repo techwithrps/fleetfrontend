@@ -23,8 +23,9 @@ export function AdminSidebar({
   setActivePage,
   mobileMenuOpen,
   toggleMobileMenu,
+  handleLogout,
 }) {
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -43,12 +44,6 @@ export function AdminSidebar({
           icon: Users,
           path: "users",
           description: "Manage Users",
-        },
-        {
-          name: "IAM Access",
-          icon: Shield,
-          path: "iam",
-          description: "Roles, Permissions, Terminals",
         },
       ],
     },
@@ -209,13 +204,6 @@ export function AdminSidebar({
       document.body.style.overflow = "unset";
     };
   }, [mobileMenuOpen]);
-
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      logout();
-      navigate("/login");
-    }
-  };
 
   const handleNavigation = (path) => {
     setActivePage(path);

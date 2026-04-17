@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { driverAPI, vendorAPI } from "../utils/Api";
+import { useAuth } from "../contexts/AuthContext";
 
 // Modal Checklist Component
 const ModalChecklist = ({ isOpen, onClose, onVerify }) => {
@@ -292,6 +293,10 @@ const DriverDetails = () => {
   const [pendingFormData, setPendingFormData] = useState(null);
   const [pendingAction, setPendingAction] = useState(null); // 'create' or 'update'
   const [fieldErrors, setFieldErrors] = useState({});
+
+  const { user } = useAuth();
+  const permissions = user?.permissions?.['Driver Master'] || { can_view: 0, can_create: 0, can_edit: 0 };
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   const [formData, setFormData] = useState({
     vendor_id: "",
@@ -661,20 +666,19 @@ const DriverDetails = () => {
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-lg font-medium text-gray-900">Driver List</h2>
-              <p className="mt-0.5 text-xs text-gray-500">
-                Select a driver to view or update details.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                resetForm();
-                setIsEditing(true);
-              }}
-              className="shrink-0 inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              type="button"
-            >
-              Add Driver
-            </button>
+              {!!permissions.can_create && (
+              <button
+                onClick={() => {
+                  resetForm();
+                  setIsEditing(true);
+                }}
+                className="shrink-0 inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                type="button"
+              >
+                Add Driver
+              </button>
+            )}
+          </div>
           </div>
 
           <div className="px-4 pb-4 max-h-[70vh] overflow-y-auto">
@@ -734,18 +738,24 @@ const DriverDetails = () => {
             </h2>
             {selectedDriver && !isEditing && (
               <div className="flex space-x-2">
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDeleteDriver}
-                  className="py-1 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm"
-                >
-                  Delete
-                </button>
+                {!!permissions.can_edit && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm"
+                  >
+                    Edit
+                  </button>
+                )}
+                {(isAdmin || (!!permissions.can_edit)) && (
+                  <button
+                    onClick={handleDeleteDriver}
+                    className={`py-1 px-3 text-white rounded-md focus:outline-none focus:ring-offset-2 text-sm ${
+                      isAdmin ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"
+                    }`}
+                  >
+                    {isAdmin ? "Delete" : "Disable"}
+                  </button>
+                )}
               </div>
             )}
           </div>

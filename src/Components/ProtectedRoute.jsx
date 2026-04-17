@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
-export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null }) => {
   const { user, loading, handleAuthError, isTokenExpired } = useAuth();
   const navigate = useNavigate();
   const [isValidating, setIsValidating] = useState(true);
@@ -13,19 +13,19 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
       // Check if user exists
       if (user) {
-        const token = localStorage.getItem("token");
-
-        // Only log token issues without redirecting
-        if (!token) {
-          console.log("Token missing in ProtectedRoute, but continuing");
-        } else if (isTokenExpired(token)) {
-          console.log("Token expired in ProtectedRoute, but continuing");
-        }
-
         // If user has required role, allow access (case-insensitive)
         const userRole = user.role?.toLowerCase();
-        const hasAccess = allowedRoles.length === 0 || 
+        
+        let hasAccess = allowedRoles.length === 0 || 
           allowedRoles.some(role => role.toLowerCase() === userRole);
+
+        // Additional check for granular page access if pageName is provided
+        if (hasAccess && pageName) {
+          const userPageNames = user.pageNames || [];
+          if (!userPageNames.includes(pageName)) {
+            hasAccess = false;
+          }
+        }
 
         if (hasAccess) {
           setIsValidating(false);
@@ -59,7 +59,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     };
 
     validateAccess();
-  }, [user, loading, allowedRoles, navigate, isTokenExpired]);
+  }, [user, loading, allowedRoles, pageName, navigate, isTokenExpired]);
 
   // Show loading state while checking authentication or validating
   if (loading || isValidating) {
@@ -83,10 +83,17 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If specific roles are required and user doesn't have them, redirect
+  // Final check for render
   const userRole = user.role?.toLowerCase();
-  const hasAccess = allowedRoles.length === 0 || 
+  let hasAccess = allowedRoles.length === 0 || 
     allowedRoles.some(role => role.toLowerCase() === userRole);
+
+  if (hasAccess && pageName) {
+    const userPageNames = user.pageNames || [];
+    if (!userPageNames.includes(pageName)) {
+      hasAccess = false;
+    }
+  }
 
   if (!hasAccess) {
     switch (userRole) {
