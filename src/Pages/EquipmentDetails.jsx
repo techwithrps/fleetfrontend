@@ -187,8 +187,8 @@ const EquipmentDetails = () => {
           : "Insurance no should be at least 6 characters",
       MANUFACTURING_YEAR: () =>
         /^(19|20)\d{2}$/.test(String(value)) &&
-        Number(value) >= 1980 &&
-        Number(value) <= currentYear
+          Number(value) >= 1980 &&
+          Number(value) <= currentYear
           ? ""
           : `Enter valid year (1980-${currentYear})`,
     };
@@ -223,26 +223,26 @@ const EquipmentDetails = () => {
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === 'file') {
-        setFormData({ ...formData, [name]: files[0] });
+      setFormData({ ...formData, [name]: files[0] });
     } else {
-        let nextValue = value;
+      let nextValue = value;
 
-        if (name === "EQUIPMENT_NO") {
-          nextValue = value.replace(/[\s-]/g, "").toUpperCase();
-        } else if (name === "VIN_NO") {
-          nextValue = value.replace(/\s/g, "").toUpperCase();
-        } else if (["ENG_NO", "ENG_TYPE", "RTO", "MANUFACTURER"].includes(name)) {
-          nextValue = value.toUpperCase();
-        } else if (["TERMINAL_ID", "COMPANY_ID", "DRIVER_ATTACH_ID"].includes(name)) {
-          nextValue = value.replace(/\D/g, "");
-        } else if (name === "MANUFACTURING_YEAR") {
-          nextValue = value.replace(/\D/g, "").slice(0, 4);
-        }
+      if (name === "EQUIPMENT_NO") {
+        nextValue = value.replace(/[\s-]/g, "").toUpperCase();
+      } else if (name === "VIN_NO") {
+        nextValue = value.replace(/\s/g, "").toUpperCase();
+      } else if (["ENG_NO", "ENG_TYPE", "RTO", "MANUFACTURER"].includes(name)) {
+        nextValue = value.toUpperCase();
+      } else if (["TERMINAL_ID", "COMPANY_ID", "DRIVER_ATTACH_ID"].includes(name)) {
+        nextValue = value.replace(/\D/g, "");
+      } else if (name === "MANUFACTURING_YEAR") {
+        nextValue = value.replace(/\D/g, "").slice(0, 4);
+      }
 
-        setFormData({ ...formData, [name]: nextValue });
-        if (fieldErrors[name]) {
-          setFieldErrors((prev) => ({ ...prev, [name]: "" }));
-        }
+      setFormData({ ...formData, [name]: nextValue });
+      if (fieldErrors[name]) {
+        setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+      }
     }
   };
 
@@ -296,7 +296,7 @@ const EquipmentDetails = () => {
   // Handle form submission for creating/updating vehicles
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.EQUIPMENT_NO) {
       toast.error("Vehicle No is required");
@@ -306,10 +306,10 @@ const EquipmentDetails = () => {
       toast.error("Please fix highlighted vehicle fields");
       return;
     }
-    
+
     const data = new FormData();
     for (const key in formData) {
-        data.append(key, formData[key]);
+      data.append(key, formData[key]);
     }
 
     try {
@@ -417,7 +417,7 @@ const EquipmentDetails = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Vehicle Master</h1>
-      
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Equipment List */}
         <div className="order-2 lg:order-2 bg-white rounded-lg shadow overflow-hidden">
@@ -445,7 +445,7 @@ const EquipmentDetails = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="max-h-[70vh] overflow-y-auto p-3 space-y-2 bg-slate-50/40">
             {loading ? (
               <div className="p-6 flex justify-center">
@@ -455,13 +455,12 @@ const EquipmentDetails = () => {
               <div className="p-8 text-center text-slate-500">No vehicles found</div>
             ) : (
               equipment.map((equip) => (
-                <div 
-                  key={equip.EQUIPMENT_ID} 
-                  className={`group rounded-2xl border p-4 cursor-pointer transition ${
-                    selectedEquipment?.EQUIPMENT_ID === equip.EQUIPMENT_ID
+                <div
+                  key={equip.EQUIPMENT_ID}
+                  className={`group rounded-2xl border p-4 cursor-pointer transition ${selectedEquipment?.EQUIPMENT_ID === equip.EQUIPMENT_ID
                       ? "bg-white border-blue-200 shadow-sm"
                       : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
-                  }`}
+                    }`}
                   onClick={() => handleSelectEquipment(equip)}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -476,11 +475,10 @@ const EquipmentDetails = () => {
                       </div>
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black tracking-wide ${
-                        equip.STATUS === "A"
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black tracking-wide ${equip.STATUS === "A"
                           ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100"
                           : "bg-slate-100 text-slate-600"
-                      }`}
+                        }`}
                     >
                       {equip.STATUS === "A" ? "ACTIVE" : "INACTIVE"}
                     </span>
@@ -490,17 +488,17 @@ const EquipmentDetails = () => {
             )}
           </div>
         </div>
-        
+
         {/* Equipment Form */}
         <div className="order-1 lg:order-1 bg-white rounded-lg shadow">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
-                  {isEditing ? (selectedEquipment ? "Edit Vehicle" : "Add New Vehicle") : "Vehicle Details"}
+              {isEditing ? (selectedEquipment ? "Edit Vehicle" : "Add New Vehicle") : "Vehicle Details"}
             </h2>
             {selectedEquipment && !isEditing && (
               <div className="flex space-x-2">
                 {!!permissions.can_edit && (
-                  <button 
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm"
                   >
@@ -509,11 +507,10 @@ const EquipmentDetails = () => {
                 )}
                 {/* Admin can Delete, Customer can only Disable (Soft-delete) */}
                 {(isAdmin || (!!permissions.can_edit)) && (
-                  <button 
+                  <button
                     onClick={handleDeleteEquipment}
-                    className={`py-1 px-3 text-white rounded-md focus:outline-none focus:ring-offset-2 text-sm ${
-                      isAdmin ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"
-                    }`}
+                    className={`py-1 px-3 text-white rounded-md focus:outline-none focus:ring-offset-2 text-sm ${isAdmin ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"
+                      }`}
                   >
                     {isAdmin ? "Delete" : "Disable"}
                   </button>
@@ -521,28 +518,28 @@ const EquipmentDetails = () => {
               </div>
             )}
           </div>
-          
+
           <div className="p-6">
             {!selectedEquipment && !isEditing ? (
               <div className="text-center text-gray-500 py-12">
                 <p>Select a vehicle from the list or add a new one</p>
               </div>
             ) : (
-              <form 
+              <form
                 key={selectedEquipment ? selectedEquipment.EQUIPMENT_ID : 'new-form'}
-                onSubmit={handleSubmit} 
-                onBlurCapture={handleFieldBlur} 
+                onSubmit={handleSubmit}
+                onBlurCapture={handleFieldBlur}
                 className="space-y-6"
               >
                 {/* Basic Information */}
-	                <div className="pt-4">
-	                  <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Basic Information</h3>
-	                  
-	                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-	                    <input type="hidden" name="TERMINAL_ID" value={formData.TERMINAL_ID} />
-	                    
-	                    <div>
-	                      <label className="block text-sm font-medium text-gray-700">Vehicle No*</label>
+                <div className="pt-4">
+                  <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Basic Information</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <input type="hidden" name="TERMINAL_ID" value={formData.TERMINAL_ID} />
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Vehicle No*</label>
                       <input
                         type="text"
                         name="EQUIPMENT_NO"
@@ -557,7 +554,7 @@ const EquipmentDetails = () => {
                         <p className="mt-1 text-xs text-red-600">{fieldErrors.EQUIPMENT_NO}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Vehicle Type</label>
                       <select
@@ -574,7 +571,7 @@ const EquipmentDetails = () => {
                         <option value="DUMPER">Dumper</option>
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
                       <input
@@ -586,7 +583,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Registration Date</label>
                       <input
@@ -598,7 +595,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Manufacturer</label>
                       <input
@@ -611,7 +608,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Model</label>
                       <input
@@ -624,7 +621,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Manufacturing Year</label>
                       <input
@@ -640,7 +637,7 @@ const EquipmentDetails = () => {
                         <p className="mt-1 text-xs text-red-600">{fieldErrors.MANUFACTURING_YEAR}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Vendor</label>
                       <select
@@ -660,11 +657,11 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Engine Information */}
                 <div className="pt-4">
                   <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Engine Information</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Engine Number</label>
@@ -678,7 +675,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Engine Type</label>
                       <select
@@ -695,7 +692,7 @@ const EquipmentDetails = () => {
                         <option value="EV">EV</option>
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">VIN Number</label>
                       <input
@@ -711,7 +708,7 @@ const EquipmentDetails = () => {
                         <p className="mt-1 text-xs text-red-600">{fieldErrors.VIN_NO}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Bed Changeable</label>
                       <select
@@ -725,7 +722,7 @@ const EquipmentDetails = () => {
                         <option value="N">No</option>
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">XL Type</label>
                       <input
@@ -739,11 +736,11 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Weight Information */}
                 <div className="pt-4">
                   <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Weight Information</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Tare Weight</label>
@@ -756,7 +753,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Gross Weight</label>
                       <input
@@ -770,11 +767,11 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Insurance & Permit Information */}
                 <div className="pt-4">
                   <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Insurance & Permit Information</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Insurance Number</label>
@@ -791,7 +788,7 @@ const EquipmentDetails = () => {
                         <p className="mt-1 text-xs text-red-600">{fieldErrors.INSURANCE_NO}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Insurance Vendor</label>
                       <input
@@ -804,7 +801,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Insurance Validity</label>
                       <input
@@ -816,7 +813,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Permit From</label>
                       <input
@@ -828,7 +825,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Permit To</label>
                       <input
@@ -840,7 +837,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">State Permit From</label>
                       <input
@@ -852,7 +849,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">State Permit To</label>
                       <input
@@ -864,7 +861,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Pollution Validity</label>
                       <input
@@ -876,7 +873,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Road Tax Validity</label>
                       <input
@@ -890,11 +887,11 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Documents & Status */}
                 <div className="pt-4">
                   <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Documents & Status</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">RTO</label>
@@ -908,7 +905,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Fitness Document</label>
                       <input
@@ -920,7 +917,7 @@ const EquipmentDetails = () => {
                       />
                       {renderViewDocButton(formData.FITNESS_DOC, "View Current Fitness Doc", true)}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Validity</label>
                       <input
@@ -932,7 +929,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">RC Document</label>
                       <input
@@ -944,7 +941,7 @@ const EquipmentDetails = () => {
                       />
                       {renderViewDocButton(formData.RC_DOC, "View Current RC Doc", true)}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Insurance Document</label>
                       <input
@@ -956,7 +953,7 @@ const EquipmentDetails = () => {
                       />
                       {renderViewDocButton(formData.INSURANCE_DOC, "View Current Insurance Doc", true)}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Permit A</label>
                       <input
@@ -968,7 +965,7 @@ const EquipmentDetails = () => {
                       />
                       {renderViewDocButton(formData.PERMIT_A, "View Current Permit A", true)}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Permit B</label>
                       <input
@@ -980,7 +977,7 @@ const EquipmentDetails = () => {
                       />
                       {renderViewDocButton(formData.PERMIT_B, "View Current Permit B", true)}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Condition</label>
                       <select
@@ -995,7 +992,7 @@ const EquipmentDetails = () => {
                         <option value="R">Refurbished</option>
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Status</label>
                       <select
@@ -1011,11 +1008,11 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Driver Attachment */}
                 <div className="pt-4">
                   <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Driver Attachment</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Driver Attach ID</label>
@@ -1028,7 +1025,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Driver Attach Status</label>
                       <select
@@ -1045,11 +1042,11 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Other Information */}
                 <div className="pt-4">
                   <h3 className="text-md font-medium text-gray-900 border-b pb-2 mb-4">Other Information</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Company ID</label>
@@ -1062,7 +1059,7 @@ const EquipmentDetails = () => {
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Image</label>
                       <input
@@ -1074,7 +1071,7 @@ const EquipmentDetails = () => {
                       />
                       {renderViewDocButton(formData.IMAGE, "View Current Vehicle Image")}
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700">Remarks</label>
                       <textarea
@@ -1089,7 +1086,7 @@ const EquipmentDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {isEditing && (
                   <div className="flex justify-end space-x-3 pt-6 border-t">
                     <button

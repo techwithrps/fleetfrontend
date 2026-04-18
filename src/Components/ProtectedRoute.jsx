@@ -20,7 +20,8 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
           allowedRoles.some(role => role.toLowerCase() === userRole);
 
         // Additional check for granular page access if pageName is provided
-        if (hasAccess && pageName) {
+        // Special Case: 'admin' role bypasses granular page checks
+        if (hasAccess && pageName && userRole !== 'admin') {
           const userPageNames = user.pageNames || [];
           if (!userPageNames.includes(pageName)) {
             hasAccess = false;
@@ -88,7 +89,9 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
   let hasAccess = allowedRoles.length === 0 || 
     allowedRoles.some(role => role.toLowerCase() === userRole);
 
-  if (hasAccess && pageName) {
+  // Additional check for granular page access if pageName is provided
+  // Special Case: 'admin' role bypasses granular page checks
+  if (hasAccess && pageName && userRole !== 'admin') {
     const userPageNames = user.pageNames || [];
     if (!userPageNames.includes(pageName)) {
       hasAccess = false;
