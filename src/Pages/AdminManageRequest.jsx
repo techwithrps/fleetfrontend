@@ -23,6 +23,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  ShieldCheck,
+  Activity,
+  Layers,
+  X,
+  Briefcase,
+  AlertCircle
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -47,44 +53,35 @@ const parseJSON = (data, defaultValue) => {
 const formatCurrency = (amount) =>
   amount || amount === 0
     ? `₹${Number(amount).toLocaleString("en-IN")}`
-    : "Not specified";
+    : "₹0";
 
 const formatDate = (dateString) =>
-  dateString ? new Date(dateString).toLocaleDateString() : "N/A";
+  dateString ? new Date(dateString).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }) : "N/A";
 
 // Component for Status Badge
 const StatusBadge = ({ status }) => {
   const statusConfig = {
-    pending: { color: "bg-yellow-100 text-yellow-800", icon: "⏳" },
-    approved: { color: "bg-green-100 text-green-800", icon: "✓" },
-    "in progress": { color: "bg-blue-100 text-blue-800", icon: "🚛" },
-    completed: { color: "bg-purple-100 text-purple-800", icon: "📦" },
-    rejected: { color: "bg-red-100 text-red-800", icon: "✕" },
+    pending: { color: "bg-amber-100/80 text-amber-700 border-amber-200", label: "Pending" },
+    approved: { color: "bg-emerald-100/80 text-emerald-700 border-emerald-200", label: "Approved" },
+    "in progress": { color: "bg-blue-100/80 text-blue-700 border-blue-200", label: "In Progress" },
+    completed: { color: "bg-indigo-100/80 text-indigo-700 border-indigo-200", label: "Completed" },
+    rejected: { color: "bg-rose-100/80 text-rose-700 border-rose-200", label: "Rejected" },
   };
   const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${config.color} shadow-sm backdrop-blur-sm`}
     >
-      <span>{config.icon}</span>
-      {status}
+      {config.label}
     </span>
   );
 };
 
-// Component for Profit/Loss Indicator
-const ProfitLossIndicator = ({ profitLoss }) => {
-  if (profitLoss > 0) return <TrendingUp className="w-4 h-4 text-green-500" />;
-  if (profitLoss < 0) return <TrendingDown className="w-4 h-4 text-red-500" />;
-  return <div className="w-4 h-4 bg-gray-300 rounded-full"></div>;
-};
-
-const AdminManageRequest = ({
-  collapsed,
-  toggleSidebar,
-  mobileMenuOpen,
-  toggleMobileMenu,
-}) => {
+const AdminManageRequest = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -93,14 +90,12 @@ const AdminManageRequest = ({
   const [requestId, setRequestId] = useState("");
   const [shipaNo, setShipaNo] = useState("");
   const [containerNo, setContainerNo] = useState("");
-  const [isFiltered, setIsFiltered] = useState(false); // Track if filters are applied
+  const [isFiltered, setIsFiltered] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [transporterDetails, setTransporterDetails] = useState(null);
   const [adminComment, setAdminComment] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -153,15 +148,12 @@ const AdminManageRequest = ({
     async (page, applyFilters = false) => {
       setIsLoading(true);
       try {
-        const params = { page, limit: requestsPerPage };
+        const params = { page: page, limit: requestsPerPage };
         let endpoint = "/transport-requests/all";
 
         if (applyFilters) {
-          // Validate that at least one filter is provided
           if (!requestId && !shipaNo && !containerNo) {
-            toast.info(
-              "Please enter a Request ID, SHIPA No, or Container No to search."
-            );
+            toast.info("Please enter search parameters.");
             setReports([]);
             setTotalPages(1);
             setIsLoading(false);
@@ -175,13 +167,13 @@ const AdminManageRequest = ({
 
         const response = await api.get(endpoint, { params });
         const {
-          requests,
-          totalPages: newTotalPages,
-          currentPage: newCurrentPage,
+          requests = [],
+          totalPages: newTotalPages = 1,
+          currentPage: newCurrentPage = 1,
         } = response.data;
 
         const reportsWithDetails = await Promise.all(
-          (requests || []).map(async (shipment) => {
+          requests.map(async (shipment) => {
             let transporterDetails = [];
             let vehicleCharges = 0;
             let vehicleCount = 0;
@@ -251,7 +243,6 @@ const AdminManageRequest = ({
                 : totalPaid > 0
                 ? "Partially Paid"
                 : "Unpaid";
-            const outstandingAmount = Math.max(0, serviceCharges - totalPaid);
 
             return {
               ...shipment,
@@ -270,12 +261,10 @@ const AdminManageRequest = ({
               profit_loss: profitLoss,
               profit_loss_percentage: profitLossPercentage,
               total_paid: totalPaid,
-              outstanding_amount: outstandingAmount,
               payment_status: paymentStatus,
               vehicle_count: vehicleCount,
               transporter_details: transporterDetails,
               vehicle_container_mapping: vehicleContainerMapping,
-              transaction_data: transactionData,
               customer_name:
                 shipment.customer_name || `Customer ${shipment.customer_id}`,
               total_containers:
@@ -290,8 +279,8 @@ const AdminManageRequest = ({
         );
 
         setReports(reportsWithDetails);
-        setTotalPages(newTotalPages || 1);
-        setCurrentPage(newCurrentPage || 1);
+        setTotalPages(newTotalPages);
+        setCurrentPage(newCurrentPage);
       } catch (error) {
         console.error("Error fetching reports:", error);
         toast.error("Failed to fetch admin reports");
@@ -317,91 +306,22 @@ const AdminManageRequest = ({
       }
       return null;
     } catch (error) {
-      console.log(`No transaction data for shipment ${requestId}`);
       return null;
     }
   };
 
-  const fetchTransporterDetails = useCallback(
-    async (requestId) => {
-      try {
-        if (transporterCache.has(requestId)) {
-          setTransporterDetails(transporterCache.get(requestId));
-          return;
-        }
-        const response = await api.get(
-          `/transport-requests/${requestId}/transporter`
-        );
-        if (response.data.success) {
-          const details = Array.isArray(response.data.data)
-            ? response.data.data
-            : [response.data.data];
-          setTransporterDetails(details);
-          transporterCache.set(requestId, details);
-        } else {
-          setTransporterDetails(null);
-        }
-      } catch (error) {
-        console.log("No transporter details found for request:", requestId);
-        setTransporterDetails(null);
-      }
-    },
-    [transporterCache]
-  );
-
   const handleSearch = () => {
-    setCurrentPage(1); // Reset to first page on search
-    setIsFiltered(true); // Enable filtered mode
+    setCurrentPage(1);
+    setIsFiltered(true);
   };
 
   const refreshData = () => {
     setRequestId("");
     setShipaNo("");
     setContainerNo("");
-    setIsFiltered(false); // Reset to unfiltered mode
+    setIsFiltered(false);
     setCurrentPage(1);
-    setReports([]);
-    setTotalPages(1);
     toast.success("Reports data refreshed successfully");
-  };
-
-  const handleStatusUpdate = async (requestId, status) => {
-    try {
-      setUpdating(true);
-      await api.put(`/transport-requests/${requestId}/status`, {
-        status,
-        adminComment: adminComment.trim(),
-      });
-      setShowDetailModal(false);
-      fetchReports(currentPage, isFiltered); // Maintain current page and filter state
-      toast.success(`Request ${status} successfully`);
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error(error.message || "Failed to update request status");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleDownloadInvoice = async (report) => {
-    try {
-      const loadingToast = toast.loading("Generating invoice...");
-      const response = await api.get(
-        `/transport-requests/${report.id}/transporter`
-      );
-      const transporterDetails = response.data.success
-        ? response.data.data
-        : null;
-      const doc = generateInvoice(report, transporterDetails);
-      if (!doc) throw new Error("Failed to generate PDF document");
-      const timestamp = new Date().toISOString().split("T")[0];
-      doc.save(`invoice-${report.id}-${timestamp}.pdf`);
-      toast.dismiss(loadingToast);
-      toast.success("Invoice downloaded successfully!");
-    } catch (error) {
-      console.error("Invoice download error:", error);
-      toast.error("Failed to generate invoice");
-    }
   };
 
   const handleReportClick = (report) => {
@@ -448,130 +368,37 @@ const AdminManageRequest = ({
       admin_comment: report.admin_comment || "",
     });
     setAdminComment(report.admin_comment || "");
-    setShowDetailModal(true);
-    fetchTransporterDetails(report.id);
   };
 
   const handleEditSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!selectedRequest) return;
-
     setIsSubmitting(true);
-
     try {
-      if (
-        !selectedRequest.expected_pickup_date ||
-        !selectedRequest.expected_delivery_date
-      ) {
-        toast.error("Pickup and delivery dates are required");
-        return;
-      }
-
-      const isValidDate = (dateString) => {
-        const date = new Date(dateString);
-        return !isNaN(date.getTime());
-      };
-
-      if (
-        !isValidDate(selectedRequest.expected_pickup_date) ||
-        !isValidDate(selectedRequest.expected_delivery_date)
-      ) {
-        toast.error("Invalid date format");
-        return;
-      }
-
       const formatTimeForDatabase = (timeString) => {
         if (!timeString) return null;
         return `${timeString.trim()}:00`;
       };
-
       const formData = {
-        customer_id: selectedRequest.customer_id,
-        SHIPA_NO: selectedRequest.SHIPA_NO?.trim() || "",
-        consignee: selectedRequest.consignee?.trim() || "",
-        consigner: selectedRequest.consigner?.trim() || "",
-        vehicle_type: selectedRequest.vehicle_type || "",
-        vehicle_size: selectedRequest.vehicle_size || "",
-        vehicle_status: selectedRequest.vehicle_status || "Empty",
-        no_of_vehicles: parseInt(selectedRequest.no_of_vehicles) || 1,
-        pickup_location: selectedRequest.pickup_location?.trim() || "",
-        stuffing_location: selectedRequest.stuffing_location?.trim() || "",
-        delivery_location: selectedRequest.delivery_location?.trim() || "",
-        commodity: selectedRequest.commodity?.trim() || "",
-        cargo_type: selectedRequest.cargo_type || "",
-        cargo_weight: parseFloat(selectedRequest.cargo_weight) || 0,
+        ...selectedRequest,
         service_type: JSON.stringify(selectedRequest.service_type || []),
         service_prices: JSON.stringify(selectedRequest.service_prices || {}),
-        containers_20ft: parseInt(selectedRequest.containers_20ft) || 0,
-        containers_40ft: parseInt(selectedRequest.containers_40ft) || 0,
-        total_containers: parseInt(selectedRequest.total_containers) || 0,
-        expected_pickup_date: selectedRequest.expected_pickup_date,
-        expected_pickup_time: formatTimeForDatabase(
-          selectedRequest.expected_pickup_time
-        ),
-        expected_delivery_date: selectedRequest.expected_delivery_date,
-        expected_delivery_time: formatTimeForDatabase(
-          selectedRequest.expected_delivery_time
-        ),
-        requested_price: parseFloat(selectedRequest.requested_price) || 0,
-        status: selectedRequest.status || "Pending",
-        admin_comment: selectedRequest.admin_comment?.trim() || "",
+        expected_pickup_time: formatTimeForDatabase(selectedRequest.expected_pickup_time),
+        expected_delivery_time: formatTimeForDatabase(selectedRequest.expected_delivery_time),
       };
-
       let response;
       if (selectedRequest.id) {
-        if (selectedRequest.customer_id === user.id) {
-          toast.error("You cannot edit your own requests");
-          return;
-        }
-        response = await api.put(
-          `/transport-requests/update/${selectedRequest.id}`,
-          formData
-        );
+        response = await api.put(`/transport-requests/update/${selectedRequest.id}`, formData);
       } else {
-        if (!formData.customer_id) {
-          toast.error("Please select a customer for the new trip");
-          return;
-        }
-        if (formData.customer_id === user.id) {
-          toast.error("You cannot create a trip for yourself");
-          return;
-        }
         response = await api.post("/transport-requests/create", formData);
       }
-
       if (response.data.success) {
-        toast.success(
-          selectedRequest.id
-            ? "Request updated successfully!"
-            : "Trip created successfully!"
-        );
+        toast.success("Saved successfully!");
         setSelectedRequest(null);
-        setTransporterData({
-          transporterName: "",
-          vehicleNumber: "",
-          driverName: "",
-          driverContact: "",
-          vendorName: "",
-          vendorContact: "",
-        });
-        fetchReports(currentPage, isFiltered); // Maintain current filter state
-      } else {
-        toast.error(
-          response.data.message ||
-            (selectedRequest.id
-              ? "Failed to update request"
-              : "Failed to create trip")
-        );
+        fetchReports(currentPage, isFiltered);
       }
     } catch (error) {
-      console.error("Submit error:", error);
-      toast.error(
-        error.response?.data?.message ||
-          (selectedRequest.id
-            ? "Failed to update request"
-            : "Failed to create trip")
-      );
+      toast.error(error.response?.data?.message || "Operation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -579,355 +406,234 @@ const AdminManageRequest = ({
 
   const handleCancelEdit = () => {
     setSelectedRequest(null);
-    setShowDetailModal(false);
-    setTransporterDetails(null);
-  };
-
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-    if (showUserMenu) setShowUserMenu(false);
-  };
-
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
-    if (showNotifications) setShowNotifications(false);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   useEffect(() => {
     fetchReports(currentPage, isFiltered);
-  }, [currentPage, isFiltered]);
+  }, [currentPage, isFiltered, fetchReports]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <ToastContainer
-        position="top-right"
-        autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-700">
+      <ToastContainer position="top-right" autoClose={2000} />
+      
       {/* Header */}
-      <header className="bg-white shadow-sm flex items-center justify-between p-4">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={toggleMobileMenu}
-            className="text-gray-600 md:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        </div>
+      <header className="bg-white border-b border-slate-200 mb-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200">
+                <ShieldCheck className="text-white w-6 h-6" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                  Request <span className="text-indigo-600 tracking-tighter">Manager</span>
+                </h1>
+                <div className="flex items-center gap-2 text-slate-500 mt-0.5">
+                  <Activity size={14} className="text-emerald-500 animate-pulse" />
+                  <p className="text-[11px] font-bold uppercase tracking-widest leading-none">Track and Manage Requests</p>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button
-              onClick={toggleNotifications}
-              className="relative text-gray-600 hover:text-gray-800"
-            >
-              <Bell className="h-6 w-6" />
-              <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50">
-                <div className="p-3 border-b">
-                  <h3 className="font-medium">Notifications</h3>
-                </div>
-                <div className="p-4 text-sm text-gray-500">
-                  No new notifications
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={toggleUserMenu}
-              className="flex items-center text-gray-700 focus:outline-none"
-            >
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                {user?.name?.charAt(0) || <User className="h-5 w-5" />}
-              </div>
-              <span className="ml-2 hidden md:block">
-                {user?.name || "Admin"}
-              </span>
-              <ChevronDown className="h-4 w-4 ml-1" />
-            </button>
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
-                <div className="py-2 px-4 border-b">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-                <div className="py-1">
-                  <button className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left flex items-center">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </button>
-                  <button className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left flex items-center">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left flex items-center"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedRequest(initializeNewRequest())}
+                className="h-11 px-6 rounded-xl bg-indigo-600 text-white flex items-center gap-2.5 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-200 hover:shadow-indigo-300 transition-all duration-300"
+              >
+                <Plus size={18} strokeWidth={3} />
+                New Booking
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-6 flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Admin Dashboard
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage all requests and reports
-              </p>
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Area - Appears first on mobile */}
+          <div className="lg:col-span-3 lg:order-2 space-y-6">
+            <div className="bg-white rounded-[32px] p-6 border border-slate-200/60 shadow-xl shadow-slate-100/50 sticky top-[100px]">
+              <div className="flex items-center justify-between mb-6">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2">
+                  <Layers size={14} className="text-indigo-500" /> Request List
+                </h4>
+                <button onClick={refreshData} className="p-2 hover:bg-slate-50 rounded-xl transition-all">
+                  <RefreshCw size={14} className={`text-slate-400 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+
+              {/* Mini Filters */}
+              <div className="space-y-3 mb-6">
+                <input
+                  type="text"
+                  placeholder="BOOKING ID"
+                  value={requestId}
+                  onChange={(e) => setRequestId(e.target.value)}
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-300"
+                />
+                <input
+                  type="text"
+                  placeholder="SHIPA NO"
+                  value={shipaNo}
+                  onChange={(e) => setShipaNo(e.target.value)}
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-300"
+                />
+                <button
+                  onClick={handleSearch}
+                  className="w-full h-10 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-lg shadow-slate-100"
+                >
+                  Apply Search
+                </button>
+              </div>
+
+              {/* Request List */}
+              <div className="space-y-3 max-h-[40vh] lg:max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
+                {reports.map((report) => (
+                  <div
+                    key={report.id}
+                    onClick={() => handleReportClick(report)}
+                    className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer group ${
+                      selectedRequest?.id === report.id
+                        ? "bg-indigo-50 border-indigo-200 shadow-md ring-4 ring-indigo-500/5"
+                        : "bg-white border-slate-100 hover:border-slate-200 hover:shadow-lg"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-[11px] font-black text-slate-900 truncate uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
+                          #{report.id} • {report.customer_name}
+                        </h4>
+                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 italic">
+                          {formatDate(report.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-slate-50/50 pt-3">
+                      <StatusBadge status={report.status} />
+                      <span className="text-[10px] font-black text-slate-900 tracking-tighter">
+                        {formatCurrency(report.service_charges)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1 || isLoading}
+                    className="p-2 hover:bg-slate-50 rounded-xl disabled:opacity-30"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || isLoading}
+                    className="p-2 hover:bg-slate-50 rounded-xl disabled:opacity-30"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => setSelectedRequest(initializeNewRequest())}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Create New Trip
-            </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left: Form and Transporter Details */}
-            <div className="lg:col-span-3">
-              {selectedRequest ? (
-                <>
+          {/* Main Content Area */}
+          <div className="lg:col-span-9 lg:order-1 space-y-8">
+            {selectedRequest ? (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                <div className="bg-white rounded-[32px] p-8 border border-slate-200/60 shadow-xl shadow-slate-100/50">
+                  <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-slate-50 rounded-2xl text-slate-400">
+                        <FileText size={24} />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+                          {selectedRequest.id ? `Edit Request #${selectedRequest.id}` : 'New Request Form'}
+                        </h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Fill in the details for the request</p>
+                      </div>
+                    </div>
+                    <button onClick={handleCancelEdit} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400">
+                      <X size={20} />
+                    </button>
+                  </div>
+                  
                   <ServiceRequestForm
                     requestData={selectedRequest}
                     setRequestData={setSelectedRequest}
                     handleSubmit={handleEditSubmit}
                     isSubmitting={isSubmitting}
                     handleCancelEdit={handleCancelEdit}
-                    isCreateMode={!selectedRequest.id}
                   />
-                  <TransporterDetails
-                    transportRequestId={selectedRequest.id || null}
-                    numberOfVehicles={selectedRequest.no_of_vehicles}
-                    transporterData={transporterData}
-                    setTransporterData={setTransporterData}
-                    isEditMode={!!selectedRequest.id}
-                    selectedServices={selectedRequest.service_type}
-                    vehicleType={selectedRequest.vehicle_type}
-                  />
-                </>
-              ) : (
-                <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
-                  Select a request from the list to edit or create a new trip
                 </div>
-              )}
-            </div>
 
-            {/* Right: Request List */}
-            <div className="lg:col-span-1 bg-white rounded-lg shadow h-fit">
-              <div className="px-4 py-3 border-b border-gray-200">
-                <h3 className="text-sm font-medium text-gray-900">
-                  All Requests
-                </h3>
-                <div className="mt-2 space-y-2">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={requestId}
-                      onChange={(e) => setRequestId(e.target.value)}
-                      placeholder="Search by Request ID"
-                      className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <Search className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                  <div class="relative">
-                    <input
-                      type="text"
-                      value={shipaNo}
-                      onChange={(e) => setShipaNo(e.target.value)}
-                      placeholder="Search by SHIPA No"
-                      className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <Search class="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                  <div class="relative">
-                    <input
-                      type="text"
-                      value={containerNo}
-                      onChange={(e) => setContainerNo(e.target.value)}
-                      placeholder="Search by Container No"
-                      className="block w-full rounded-md border-gray-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <Search class="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleSearch}
-                      className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      disabled={isLoading}
-                    >
-                      <Search className="h-5 w-5 mr-2" />
-                      {isLoading ? "Searching..." : "Search"}
-                    </button>
-                    <button
-                      onClick={refreshData}
-                      className="p-2 text-gray-600 hover:text-gray-800"
-                      title="Refresh"
-                    >
-                      <RefreshCw className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4">
-                {isLoading && reports.length === 0 ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : reports.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">
-                      {isFiltered
-                        ? "No requests found matching your criteria"
-                        : "No requests found"}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {reports.map((report) => (
-                      <div
-                        key={report.id}
-                        onClick={() => handleReportClick(report)}
-                        className={`border rounded-lg p-3 transition-all duration-200 ${
-                          report.customer_id === user.id
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-pointer hover:border-blue-300 hover:shadow-sm"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              Booking #{report.id} - {report.customer_name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatDate(report.created_at)}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <StatusBadge status={report.status} />
-                            {report.status === "approved" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDownloadInvoice(report);
-                                }}
-                                className="text-green-600 hover:text-green-800 p-1 rounded"
-                                title="Download Invoice"
-                              >
-                                <Download className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        <div className="space-y-1 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Vehicle:</span>
-                            <span className="font-medium">
-                              {report.vehicle_type}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Charges:</span>
-                            <span className="font-medium">
-                              {formatCurrency(report.service_charges)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Profit/Loss:</span>
-                            <span className="font-medium flex items-center">
-                              {formatCurrency(report.profit_loss)}
-                              <ProfitLossIndicator
-                                profitLoss={report.profit_loss}
-                              />
-                            </span>
-                          </div>
-                        </div>
+                {selectedRequest.id && (
+                  <div className="bg-white rounded-[32px] p-8 border border-slate-200/60 shadow-xl shadow-slate-100/50">
+                    <div className="flex items-center gap-4 mb-8 border-b border-slate-100 pb-6">
+                      <div className="p-3 bg-slate-50 rounded-2xl text-slate-400">
+                        <Truck size={24} />
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {totalPages > 1 && (
-                  <div className="mt-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        Page {currentPage} of {totalPages}
-                      </p>
+                      <div>
+                        <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Assign Transporter & Vehicle</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Add transporter details for this request</p>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(prev - 1, 1))
-                        }
-                        disabled={currentPage === 1 || isLoading}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          )
-                        }
-                        disabled={currentPage === totalPages || isLoading}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
+                    <TransporterDetails
+                      transportRequestId={selectedRequest.id}
+                      numberOfVehicles={selectedRequest.no_of_vehicles}
+                      transporterData={transporterData}
+                      setTransporterData={setTransporterData}
+                      isEditMode={true}
+                      selectedServices={selectedRequest.service_type}
+                      vehicleType={selectedRequest.vehicle_type}
+                    />
                   </div>
                 )}
               </div>
-            </div>
+            ) : (
+              <div className="h-[60vh] flex flex-col items-center justify-center bg-white rounded-[32px] border border-dashed border-slate-200">
+                <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-200 mb-6">
+                  <Briefcase size={40} />
+                </div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-[0.3em]">No Request Selected</h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest italic max-w-xs text-center leading-relaxed">
+                  Please select a request from the list or click 'New Booking' to start
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
 
-      {/* Detail Modal */}
-      {showDetailModal && selectedReport && (
-        <RequestModal
-          isOpen={showDetailModal}
-          onClose={() => setShowDetailModal(false)}
-          title={`Request Details - Booking #${selectedReport.id}`}
-        >
-          <div className="p-6">{/* ... modal content ... */}</div>
-        </RequestModal>
-      )}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #E2E8F0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #CBD5E1;
+        }
+        @keyframes zoom-in-95 {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-in {
+          animation-fill-mode: forwards;
+        }
+      `}} />
     </div>
   );
 };

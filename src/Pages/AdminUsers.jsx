@@ -1,21 +1,71 @@
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import api, { userAPI } from "../utils/Api"; // Import the specific API methods
+import { toast, ToastContainer } from "react-toastify";
+import api, { userAPI } from "../utils/Api";
 import { useAuth } from "../contexts/AuthContext";
-import { Users, Search, RefreshCw, UserPlus, X, Mail, Phone, Lock, Shield, User, CheckSquare } from "lucide-react";
+import { 
+  Users, 
+  Search, 
+  RefreshCw, 
+  UserPlus, 
+  X, 
+  Mail, 
+  Phone, 
+  Lock, 
+  Shield, 
+  User, 
+  CheckSquare,
+  ShieldCheck,
+  Activity,
+  Layers,
+  ChevronRight,
+  MoreVertical,
+  Trash2,
+  Edit3,
+  CheckCircle2,
+  Plus
+} from "lucide-react";
 import { useLocation } from "react-router-dom";
 
-// Modal Component for Add/Edit User
+const ROLE_OPTIONS = [
+  { value: "customer", label: "Customer" },
+  { value: "operations", label: "Operations" },
+  { value: "finance", label: "Finance" },
+  { value: "admin", label: "Admin" },
+];
+
+const ROLE_STYLES = {
+  customer: {
+    badge: "bg-blue-100/80 text-blue-700 border-blue-200",
+    avatar: "bg-blue-50 text-blue-600",
+    empty: "No customers found",
+  },
+  operations: {
+    badge: "bg-amber-100/80 text-amber-700 border-amber-200",
+    avatar: "bg-amber-50 text-amber-600",
+    empty: "No operations users found",
+  },
+  finance: {
+    badge: "bg-emerald-100/80 text-emerald-700 border-emerald-200",
+    avatar: "bg-emerald-50 text-emerald-600",
+    empty: "No finance users found",
+  },
+  admin: {
+    badge: "bg-indigo-100/80 text-indigo-700 border-indigo-200",
+    avatar: "bg-indigo-50 text-indigo-600",
+    empty: "No administrators found",
+  },
+};
+
+// Modern User Modal
 const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
-    role: "Customer",
+    role: "customer",
   });
 
-  // Sync state when user prop changes
   useEffect(() => {
     if (user) {
       setFormData({
@@ -23,7 +73,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = fals
         email: user.email || "",
         phone: user.phone || "",
         password: "",
-        role: user.role || "Customer",
+        role: user.role?.toLowerCase() || "customer",
       });
     } else {
       setFormData({
@@ -31,7 +81,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = fals
         email: "",
         phone: "",
         password: "",
-        role: "Customer",
+        role: "customer",
       });
     }
   }, [user, isOpen]);
@@ -39,113 +89,117 @@ const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = fals
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="text-xl font-bold text-slate-800 flex items-center">
-            {user ? "Edit User" : "Add New User"}
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
-            <X className="h-5 w-5 text-slate-500" />
-          </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300" onClick={onClose}></div>
+      <div className="relative bg-white rounded-[32px] w-full max-w-md shadow-2xl border border-white/40 overflow-hidden transform animate-in zoom-in-95 duration-300">
+        <div className="bg-gradient-to-r from-slate-800 to-slate-950 p-8 text-white">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-black uppercase tracking-widest">
+              {user ? "Edit User" : "Add New User"}
+            </h3>
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={(e) => {
           e.preventDefault();
           onSubmit(formData);
-        }} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Full Name</label>
+        }} className="p-8 space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Full Name</label>
             <div className="relative group">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="text"
                 required
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter full name"
+                placeholder="USER NAME"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Email Address</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email Address</label>
             <div className="relative group">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="email"
                 required
                 disabled={!!user}
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:opacity-60"
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300 disabled:opacity-50"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="name@example.com"
+                placeholder="EMAIL@DOMAIN.COM"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Phone Number</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Phone Number</label>
             <div className="relative group">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="tel"
                 required
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="10-digit phone number"
+                placeholder="10-DIGIT MOBILE"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-              Password {user && <span className="text-[10px] text-slate-400 normal-case font-normal">(Leave blank to keep current)</span>}
-            </label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Password</label>
             <div className="relative group">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="password"
                 required={!user}
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder={user ? "••••••••" : "Create a password"}
+                placeholder={user ? "••••••••" : "NEW PASSWORD"}
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Access Role</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">User Role</label>
             <div className="relative group">
-              <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <Shield className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <select
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer transition-all uppercase text-xs font-bold"
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300 appearance-none cursor-pointer"
                 value={formData.role.toLowerCase()}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                <option value="customer">Customer</option>
-                <option value="admin">Admin</option>
+                {ROLE_OPTIONS.map((roleOption) => (
+                  <option key={roleOption.value} value={roleOption.value}>
+                    {roleOption.label.toUpperCase()}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-4 flex gap-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+              className="flex-1 h-12 rounded-2xl bg-slate-100 text-slate-500 font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-200 transition-all disabled:opacity-50"
+              className="flex-[2] h-12 rounded-2xl bg-slate-900 text-white font-black text-[11px] uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 disabled:opacity-50"
             >
-              {isSubmitting ? "Processing..." : user ? "Update User" : "Create User"}
+              {isSubmitting ? "Processing..." : user ? "Update Protocol" : "Authorize Principal"}
             </button>
           </div>
         </form>
@@ -154,11 +208,10 @@ const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = fals
   );
 };
 
-// Access Modal (Give Role Checkboxes)
+// Access Modal for Permissions
 const AccessModal = ({ isOpen, onClose, user }) => {
   const [locations, setLocations] = useState([]);
   const [pages, setPages] = useState([]);
-  // configs: [{ id: number, locs: string[], pages: number[] }]
   const [configs, setConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -175,17 +228,11 @@ const AccessModal = ({ isOpen, onClose, user }) => {
           api.get(`/access/user/${user.id}`)
         ]);
         
-        const locs = locRes.data.data || [];
-        setLocations(locs);
+        setLocations(locRes.data.data || []);
         setPages(pageRes.data.data || []);
         
         const initialSelections = accessRes.data.data || [];
-        
-        // Group existing selections into configs
         if (initialSelections.length > 0) {
-          // 1. Map locs to their pages with permissions
-          // Selection key: location_id
-          // Page info: { page_id, can_view, can_create, can_edit }
           const locToPages = {};
           initialSelections.forEach(s => {
             const l = String(s.location_id);
@@ -198,10 +245,8 @@ const AccessModal = ({ isOpen, onClose, user }) => {
             });
           });
           
-          // 2. Group by identical page configurations
           const configMap = {};
           Object.keys(locToPages).forEach(l => {
-            // Create a stable string representation of pages + permissions
             const pStr = locToPages[l]
               .sort((a,b) => a.page_id - b.page_id)
               .map(p => `${p.page_id}:${p.can_view?1:0}${p.can_create?1:0}${p.can_edit?1:0}`)
@@ -211,7 +256,6 @@ const AccessModal = ({ isOpen, onClose, user }) => {
             configMap[pStr].push(l);
           });
           
-          // 3. Create configs array
           const newConfigs = Object.keys(configMap).map((pStr, idx) => {
             const pageData = pStr.split("|").filter(s => s).map(s => {
               const [pid, perms] = s.split(":");
@@ -230,7 +274,6 @@ const AccessModal = ({ isOpen, onClose, user }) => {
           });
           setConfigs(newConfigs.length > 0 ? newConfigs : [{ id: Date.now(), locs: [], pages: [] }]);
         } else {
-          // Blank config
           setConfigs([{ id: Date.now(), locs: [], pages: [] }]);
         }
       } catch (err) {
@@ -242,40 +285,24 @@ const AccessModal = ({ isOpen, onClose, user }) => {
     fetchData();
   }, [isOpen, user]);
 
-  const addConfigBlock = () => {
-    setConfigs([...configs, { id: Date.now(), locs: [], pages: [] }]);
-  };
-
-  const removeConfigBlock = (id) => {
-    setConfigs(configs.filter(c => c.id !== id));
-  };
+  const addConfigBlock = () => setConfigs([...configs, { id: Date.now(), locs: [], pages: [] }]);
+  const removeConfigBlock = (id) => setConfigs(configs.filter(c => c.id !== id));
 
   const togglePermission = (configId, pageId, type) => {
     setConfigs(configs.map(c => {
       if (c.id === configId) {
         const pageIdx = c.pages.findIndex(p => p.page_id === pageId);
         let nextPages = [...c.pages];
-        
         if (pageIdx === -1) {
-          // Add new page entry with only the selected permission
-          nextPages.push({
-            page_id: pageId,
-            can_view: type === 'view',
-            can_create: type === 'create',
-            can_edit: type === 'edit'
-          });
+          nextPages.push({ page_id: pageId, can_view: type === 'view', can_create: type === 'create', can_edit: type === 'edit' });
         } else {
-          // Toggle existing permission
           const p = nextPages[pageIdx];
           const nextVal = !p[`can_${type}`];
           nextPages[pageIdx] = { ...p, [`can_${type}`]: nextVal };
-          
-          // If all permissions are false, remove the page entry
           if (!nextPages[pageIdx].can_view && !nextPages[pageIdx].can_create && !nextPages[pageIdx].can_edit) {
             nextPages = nextPages.filter((_, i) => i !== pageIdx);
           }
         }
-        
         return { ...c, pages: nextPages };
       }
       return c;
@@ -283,20 +310,12 @@ const AccessModal = ({ isOpen, onClose, user }) => {
   };
 
   const toggleLocation = (configId, locId) => {
-    // A location can only be in one config block to avoid conflict
     setConfigs(configs.map(c => {
       if (c.id === configId) {
         const hasLoc = c.locs.includes(locId);
-        return {
-          ...c,
-          locs: hasLoc ? c.locs.filter(l => l !== locId) : [...c.locs, locId]
-        };
+        return { ...c, locs: hasLoc ? c.locs.filter(l => l !== locId) : [...c.locs, locId] };
       } else {
-        // Remove this location from other blocks if it exists
-        return {
-          ...c,
-          locs: c.locs.filter(l => l !== locId)
-        };
+        return { ...c, locs: c.locs.filter(l => l !== locId) };
       }
     }));
   };
@@ -304,7 +323,6 @@ const AccessModal = ({ isOpen, onClose, user }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Flatten configs into assignments
       const assignments = [];
       configs.forEach(c => {
         c.locs.forEach(locId => {
@@ -319,10 +337,9 @@ const AccessModal = ({ isOpen, onClose, user }) => {
           });
         });
       });
-      
       const res = await api.post(`/access/user/${user.id}`, { assignments });
       if (res.data?.success) {
-        toast.success("Access permissions updated successfully!");
+        toast.success("Access policy enforced!");
         onClose();
       }
     } catch (err) {
@@ -335,31 +352,36 @@ const AccessModal = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50 flex-shrink-0">
-          <div>
-            <h3 className="text-xl font-bold text-slate-800">Assign Operations Roles</h3>
-            <p className="text-xs font-semibold text-slate-500 uppercase mt-1 tracking-wider">For Customer: {user?.name}</p>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative bg-white rounded-[40px] w-full max-w-5xl max-h-[90vh] shadow-2xl border border-white/40 overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+        <div className="bg-gradient-to-r from-slate-800 to-slate-950 p-8 text-white flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-black uppercase tracking-widest">Enforce Access Policy</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">User: {user?.name}</p>
+            </div>
+            <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/10">
+              <X size={24} />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
-            <X className="h-5 w-5 text-slate-500" />
-          </button>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-400 font-medium animate-pulse">Loading access configuration...</div>
+          <div className="flex-1 flex flex-col items-center justify-center p-20">
+             <RefreshCw size={48} className="animate-spin text-indigo-500 mb-6" />
+             <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Synchronizing Permissions Matrix...</p>
+          </div>
         ) : (
-          <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-8 bg-slate-50/30">
-            
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-slate-50/50">
             {configs.map((config, index) => (
-              <div key={config.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="flex-1 w-full">
-                    <label className="block text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">
-                      Select Locations for Configuration {index + 1}
+              <div key={config.id} className="bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-100/50 overflow-hidden">
+                <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col lg:flex-row gap-8">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em]">
+                      Deployment Nodes (Group {index + 1})
                     </label>
-                    <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto custom-scrollbar pr-2 pb-1">
+                    <div className="flex gap-2 flex-wrap max-h-40 overflow-y-auto custom-scrollbar pr-4">
                       {locations.map(loc => {
                         const locIdStr = String(loc.location_id);
                         const isSelectedHere = config.locs.includes(locIdStr);
@@ -369,14 +391,13 @@ const AccessModal = ({ isOpen, onClose, user }) => {
                           <button
                             key={loc.location_id}
                             onClick={() => toggleLocation(config.id, locIdStr)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                               isSelectedHere 
-                                ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200' 
                                 : isSelectedElsewhere
-                                  ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50'
-                                  : 'bg-white border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-600'
+                                  ? 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'
                             }`}
-                            title={isSelectedElsewhere ? "Assigned in another block" : ""}
                           >
                             {loc.LOCATION_NAME}
                           </button>
@@ -385,23 +406,20 @@ const AccessModal = ({ isOpen, onClose, user }) => {
                     </div>
                   </div>
                   {configs.length > 1 && (
-                    <button
-                      onClick={() => removeConfigBlock(config.id)}
-                      className="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors mt-2 sm:mt-0"
-                    >
-                      <X className="w-4 h-4" /> Remove
+                    <button onClick={() => removeConfigBlock(config.id)} className="p-3 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all self-start border border-rose-100">
+                      <Trash2 size={20} />
                     </button>
                   )}
                 </div>
 
-                <div className="p-5 overflow-x-auto">
+                <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100">
-                        <th className="text-left py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Application Page</th>
-                        <th className="text-center py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">View</th>
-                        <th className="text-center py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">Create</th>
-                        <th className="text-center py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">Edit</th>
+                      <tr className="bg-slate-50/30 border-b border-slate-100">
+                        <th className="text-left px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Registry Module</th>
+                        <th className="text-center py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 w-32">Read Access</th>
+                        <th className="text-center py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 w-32">Write Access</th>
+                        <th className="text-center py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 w-32">Edit Access</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -414,41 +432,41 @@ const AccessModal = ({ isOpen, onClose, user }) => {
 
                         return (
                           <tr key={page.PAGE_ID} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3 pr-4">
-                              <span className={`text-sm font-semibold ${hasNoLoc ? 'text-slate-300' : 'text-slate-700'}`}>{page.PAGE_NAME}</span>
-                              <span className="block text-[10px] text-slate-400 uppercase tracking-tight">{page.MODULE_GROUP}</span>
+                            <td className="px-8 py-4">
+                              <span className={`text-[12px] font-black uppercase tracking-tight ${hasNoLoc ? 'text-slate-300' : 'text-slate-800'}`}>{page.PAGE_NAME}</span>
+                              <span className="block text-[8px] text-slate-400 font-black uppercase tracking-widest mt-0.5">{page.MODULE_GROUP}</span>
                             </td>
-                            <td className="py-3 text-center">
+                            <td className="py-4 text-center">
                               <button
                                 disabled={hasNoLoc}
                                 onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'view')}
-                                className={`mx-auto w-6 h-6 rounded flex items-center justify-center transition-all ${
-                                  canView ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-                                } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`mx-auto w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                                  canView ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                                } ${hasNoLoc ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
-                                {canView && <CheckSquare className="w-4 h-4" />}
+                                {canView && <CheckSquare size={14} strokeWidth={3} />}
                               </button>
                             </td>
-                            <td className="py-3 text-center">
+                            <td className="py-4 text-center">
                               <button
                                 disabled={hasNoLoc}
                                 onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'create')}
-                                className={`mx-auto w-6 h-6 rounded flex items-center justify-center transition-all ${
-                                  canCreate ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-                                } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`mx-auto w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                                  canCreate ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                                } ${hasNoLoc ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
-                                {canCreate && <CheckSquare className="w-4 h-4" />}
+                                {canCreate && <CheckSquare size={14} strokeWidth={3} />}
                               </button>
                             </td>
-                            <td className="py-3 text-center">
+                            <td className="py-4 text-center">
                               <button
                                 disabled={hasNoLoc}
                                 onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'edit')}
-                                className={`mx-auto w-6 h-6 rounded flex items-center justify-center transition-all ${
-                                  canEdit ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-                                } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`mx-auto w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                                  canEdit ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                                } ${hasNoLoc ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
-                                {canEdit && <CheckSquare className="w-4 h-4" />}
+                                {canEdit && <CheckSquare size={14} strokeWidth={3} />}
                               </button>
                             </td>
                           </tr>
@@ -462,30 +480,29 @@ const AccessModal = ({ isOpen, onClose, user }) => {
 
             <button
               onClick={addConfigBlock}
-              className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 hover:border-blue-400 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+              className="w-full py-10 border-2 border-dashed border-slate-200 rounded-[32px] text-slate-400 font-black uppercase text-[11px] tracking-[0.3em] hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-4 group"
             >
-              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                <span className="text-lg leading-none mb-0.5">+</span>
+              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all">
+                <Plus size={20} />
               </div>
-              Create Another Permissions Group
+              ADD NEW PROTOCOL GROUP
             </button>
-
           </div>
         )}
 
-        <div className="p-5 border-t border-slate-100 bg-slate-50 flex gap-3 flex-shrink-0">
+        <div className="p-10 border-t border-slate-200/60 bg-white flex gap-4 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 py-3.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-sm rounded-xl transition-all"
+            className="flex-1 h-14 rounded-2xl bg-slate-100 text-slate-500 font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || configs.every(c => c.locs.length === 0)}
-            className="flex-[2] py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-200 transition-all disabled:opacity-50"
+            className="flex-[2] h-14 rounded-2xl bg-slate-900 text-white font-black text-[11px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save Assigned Roles"}
+            {saving ? "Deploying..." : "Enforce Access Policy"}
           </button>
         </div>
       </div>
@@ -496,325 +513,217 @@ const AccessModal = ({ isOpen, onClose, user }) => {
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
-  // Access Modal states
   const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
   const [accessTargetUser, setAccessTargetUser] = useState(null);
 
-  const { user } = useAuth();
-  const location = useLocation();
-
-  const isFromSidebar = location.state?.fromSidebar || true; // DEFAULT TO TRUE TO FIX ACCESS ISSUE
-
-  // Load users function following TransporterDetails pattern
   const loadUsers = async () => {
     setLoading(true);
-    setError(null);
-
     try {
       const response = await userAPI.getAllUsers();
-      if (response.success) {
-        setUsers(response.data || response.users || []);
-      }
+      if (response.success) setUsers(response.data || response.users || []);
     } catch (error) {
-      console.error("Error loading users:", error);
-      setError(error.message || "Failed to load users");
-      setUsers([]);
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  useEffect(() => { loadUsers(); }, []);
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    setIsSubmitting(true);
+    if (!window.confirm("ARE YOU SURE YOU WANT TO TERMINATE THIS ACCOUNT?")) return;
     try {
       const response = await userAPI.deleteUser(userId);
       if (response.success) {
-        toast.success("User deleted successfully!");
-        setUsers((prev) => prev.filter((u) => u.id !== userId));
+        toast.success("Account Terminated");
+        loadUsers();
       }
     } catch (error) {
-      toast.error(error.message || "Error deleting user");
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Termination Failed");
     }
   };
 
   const handleUpdateUserRole = async (userId, newRole) => {
-    setIsSubmitting(true);
     try {
       const response = await userAPI.updateUserRole(userId, { role: newRole });
       if (response.success) {
-        toast.success("User role updated!");
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-        );
+        toast.success("Role Reassigned");
+        loadUsers();
       }
     } catch (error) {
-      toast.error(error.message || "Error updating role");
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Reassignment Failed");
     }
   };
 
   const handleModalSubmit = async (formData) => {
     setIsSubmitting(true);
     try {
-      if (selectedUser) {
-        // Use general updateUser instead of just role update
-        const response = await userAPI.updateUser(selectedUser.id, formData);
-        if (response.success) {
-          toast.success("User updated successfully!");
-          loadUsers();
-          setIsModalOpen(false);
-        }
-      } else {
-        const response = await userAPI.createUser(formData);
-        if (response.success) {
-          toast.success("User created successfully!");
-          loadUsers();
-          setIsModalOpen(false);
-        }
+      let response;
+      if (selectedUser) response = await userAPI.updateUser(selectedUser.id, formData);
+      else response = await userAPI.createUser(formData);
+      if (response.success) {
+        toast.success(selectedUser ? "Profile Updated" : "Identity Created");
+        loadUsers();
+        setIsModalOpen(false);
       }
     } catch (error) {
-      toast.error(error.message || "Operation failed");
+      toast.error("Operation Failed");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(u => 
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const customers = filteredUsers.filter(u => u.role?.toLowerCase() === 'customer');
-  const admins = filteredUsers.filter(u => u.role?.toLowerCase() === 'admin');
-
-  const handleGiveRole = (user) => {
-    setAccessTargetUser(user);
-    setIsAccessModalOpen(true);
-  };
-
-  if (loading) {
+  const renderUserSection = (title, usersInSection, roleKey, showGiveRole = false) => {
+    const roleStyle = ROLE_STYLES[roleKey];
     return (
-      <div className="flex justify-center items-center h-96">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+            {title} ({usersInSection.length})
+          </h2>
+        </div>
+        <div className="bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-100/50 overflow-hidden">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">User Name</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Details</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {usersInSection.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/30 transition-all group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-[13px] font-black ${roleStyle.avatar} border border-slate-100 shadow-sm uppercase group-hover:scale-110 transition-transform`}>
+                          {u.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-[13px] font-black text-slate-900 uppercase tracking-tight">{u.name}</div>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">USER_ID: {u.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="text-[11px] font-black text-slate-800 uppercase tracking-widest">{u.email}</div>
+                      <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter italic">{u.phone || "NO PHONE"}</div>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <select
+                        className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl border appearance-none text-center transition-all cursor-pointer outline-none focus:ring-4 focus:ring-indigo-500/10 ${roleStyle.badge}`}
+                        value={u.role?.toLowerCase()}
+                        onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
+                      >
+                        {ROLE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                        {showGiveRole && (
+                          <button onClick={() => { setAccessTargetUser(u); setIsAccessModalOpen(true); }} className="p-3 text-emerald-600 hover:bg-emerald-50 rounded-2xl border border-emerald-100 transition-all shadow-sm">
+                            <ShieldCheck size={18} strokeWidth={2.5} />
+                          </button>
+                        )}
+                        <button onClick={() => { setSelectedUser(u); setIsModalOpen(true); }} className="p-3 text-indigo-600 hover:bg-indigo-50 rounded-2xl border border-indigo-100 transition-all shadow-sm">
+                          <Edit3 size={18} strokeWidth={2.5} />
+                        </button>
+                        <button onClick={() => handleDeleteUser(u.id)} className="p-3 text-rose-600 hover:bg-rose-50 rounded-2xl border border-rose-100 transition-all shadow-sm">
+                          <Trash2 size={18} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {usersInSection.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="text-center py-16 text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
+                      {roleStyle.empty}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
-          <p className="text-slate-500 text-sm mt-1">Found {users.length} registered users</p>
-        </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={() => {
-              setSelectedUser(null);
-              setIsModalOpen(true);
-            }}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            <span className="font-bold text-sm">Add User</span>
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-700">
+      <ToastContainer position="top-right" autoClose={2000} />
+      
+      <header className="bg-white border-b border-slate-200 mb-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200">
+                <Users className="text-white w-6 h-6" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                  User <span className="text-indigo-600 tracking-tighter">Management</span>
+                </h1>
+                <div className="flex items-center gap-2 text-slate-500 mt-0.5">
+                  <Activity size={14} className="text-emerald-500 animate-pulse" />
+                  <p className="text-[11px] font-bold uppercase tracking-widest leading-none">Manage user access and roles</p>
+                </div>
+              </div>
+            </div>
 
-      <div className="space-y-8">
-        
-        {/* CUSTOMERS SECTION (Top) */}
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 mb-4 px-2">Customers ({customers.length})</h2>
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
-                  <tr>
-                    <th className="px-6 py-4">Full Identity</th>
-                    <th className="px-6 py-4">Contact Info</th>
-                    <th className="px-6 py-4">Role Access</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {customers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                            {u.name?.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-800">{u.name}</div>
-                            <div className="text-xs text-slate-400">ID: #{u.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-slate-600">{u.email}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">{u.phone || "No phone"}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <select
-                          className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest rounded-lg border-0 ring-1 ring-inset transition-all cursor-pointer bg-blue-50 text-blue-700 ring-blue-100"
-                          value={u.role?.toLowerCase()}
-                          onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
-                        >
-                          <option value="customer">Customer</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => handleGiveRole(u)}
-                          className="text-xs font-bold text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          Give Role
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setIsModalOpen(true);
-                          }}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(u.id)}
-                          className="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {customers.length === 0 && (
-                    <tr>
-                      <td colSpan="4" className="text-center py-6 text-slate-400">No customers found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="flex items-center gap-3">
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="SEARCH USERS..."
+                  className="w-72 h-11 bg-white border border-slate-200 rounded-xl pl-11 pr-4 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={() => { setSelectedUser(null); setIsModalOpen(true); }}
+                className="h-11 px-6 rounded-xl bg-indigo-600 text-white flex items-center gap-2.5 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-200 hover:shadow-indigo-300 transition-all duration-300"
+              >
+                <UserPlus size={18} strokeWidth={3} />
+                Add User
+              </button>
             </div>
           </div>
         </div>
+      </header>
 
-        {/* ADMINS SECTION (Bottom) */}
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 mb-4 px-2">Administrators ({admins.length})</h2>
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
-                  <tr>
-                    <th className="px-6 py-4">Full Identity</th>
-                    <th className="px-6 py-4">Contact Info</th>
-                    <th className="px-6 py-4">Role Access</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {admins.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                            {u.name?.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-800">{u.name}</div>
-                            <div className="text-xs text-slate-400">ID: #{u.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-slate-600">{u.email}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">{u.phone || "No phone"}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <select
-                          className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest rounded-lg border-0 ring-1 ring-inset transition-all cursor-pointer bg-purple-50 text-purple-700 ring-purple-100"
-                          value={u.role?.toLowerCase()}
-                          onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
-                        >
-                          <option value="customer">Customer</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setIsModalOpen(true);
-                          }}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(u.id)}
-                          className="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {admins.length === 0 && (
-                    <tr>
-                      <td colSpan="4" className="text-center py-6 text-slate-400">No administrators found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-10 space-y-12">
+        {renderUserSection("Administrators", filteredUsers.filter(u => u.role?.toLowerCase() === "admin"), "admin")}
+        {renderUserSection("Operations Team", filteredUsers.filter(u => u.role?.toLowerCase() === "operations"), "operations", true)}
+        {renderUserSection("Finance Team", filteredUsers.filter(u => u.role?.toLowerCase() === "finance"), "finance", true)}
+        {renderUserSection("Customers", filteredUsers.filter(u => u.role?.toLowerCase() === "customer"), "customer", true)}
+      </main>
 
-      </div>
+      <UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleModalSubmit} user={selectedUser} isSubmitting={isSubmitting} />
+      {isAccessModalOpen && <AccessModal isOpen={isAccessModalOpen} onClose={() => setIsAccessModalOpen(false)} user={accessTargetUser} />}
 
-      <UserModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleModalSubmit}
-        user={selectedUser}
-        isSubmitting={isSubmitting}
-      />
-
-      <AccessModal 
-        isOpen={isAccessModalOpen}
-        onClose={() => setIsAccessModalOpen(false)}
-        user={accessTargetUser}
-      />
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+        @keyframes zoom-in-95 { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-in { animation-fill-mode: forwards; }
+      `}} />
     </div>
   );
 }

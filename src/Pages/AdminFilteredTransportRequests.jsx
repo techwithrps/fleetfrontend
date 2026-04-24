@@ -16,6 +16,19 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  Activity,
+  Layers,
+  ArrowUpRight,
+  ShieldCheck,
+  Scale,
+  X,
+  Clock,
+  Briefcase,
+  Info,
+  User,
+  Phone,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "react-toastify";
 import api from "../utils/Api";
@@ -36,7 +49,7 @@ const parseServiceType = (serviceType) => {
 };
 
 const formatCurrency = (amount) => {
-  if (!amount || amount === 0) return "Not specified";
+  if (!amount && amount !== 0) return "₹0";
   return `₹${Number(amount).toLocaleString("en-IN")}`;
 };
 
@@ -50,26 +63,29 @@ const parseJSON = (data, defaultValue) => {
 };
 
 const formatDate = (dateString) =>
-  dateString ? new Date(dateString).toLocaleDateString() : "N/A";
+  dateString ? new Date(dateString).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }) : "N/A";
 
 const formatDateTime = (dateString) =>
-  dateString ? new Date(dateString).toLocaleString() : "N/A";
+  dateString ? new Date(dateString).toLocaleString("en-IN") : "N/A";
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
-    pending: { color: "bg-yellow-100 text-yellow-800", icon: "⏳" },
-    approved: { color: "bg-green-100 text-green-800", icon: "✓" },
-    "in progress": { color: "bg-blue-100 text-blue-800", icon: "🚛" },
-    completed: { color: "bg-purple-100 text-purple-800", icon: "📦" },
-    rejected: { color: "bg-red-100 text-red-800", icon: "✕" },
+    pending: { color: "bg-amber-100/80 text-amber-700 border-amber-200", icon: Clock },
+    approved: { color: "bg-blue-100/80 text-blue-700 border-blue-200", icon: ShieldCheck },
+    "in progress": { color: "bg-indigo-100/80 text-indigo-700 border-indigo-200", icon: Truck },
+    completed: { color: "bg-emerald-100/80 text-emerald-700 border-emerald-200", icon: Package },
+    rejected: { color: "bg-rose-100/80 text-rose-700 border-rose-200", icon: X },
   };
   const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
+  const Icon = config.icon;
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
-    >
-      <span>{config.icon}</span>
-      {status}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${config.color} backdrop-blur-sm`}>
+      <Icon size={12} strokeWidth={2.5} />
+      <span className="uppercase tracking-wider">{status || "Pending"}</span>
     </span>
   );
 };
@@ -88,7 +104,6 @@ export default function AdminFilteredTransportRequests() {
   const [transporterDetails, setTransporterDetails] = useState(null);
   const [adminComment, setAdminComment] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [exportType, setExportType] = useState("detailed");
   const [isInvoicePreviewModalOpen, setInvoicePreviewModalOpen] =
     useState(false);
   const [selectedReportForInvoice, setSelectedReportForInvoice] =
@@ -106,7 +121,7 @@ export default function AdminFilteredTransportRequests() {
         "SHIPA No": report.shipa_no,
         "Container Numbers": report.container_numbers,
         "Vehicle-Container Mapping":
-          Object.entries(report.vehicle_container_mapping)
+          Object.entries(report.vehicle_container_mapping || {})
             .map(
               ([vehicle, info]) =>
                 `${vehicle} (${info.transporter_name}): ${info.containers.join(
@@ -144,16 +159,12 @@ export default function AdminFilteredTransportRequests() {
         "Vehicle Count": report.vehicle_count,
       }));
       const sheetName = "Detailed Reports";
-      const fileNameSuffix = "detailed";
-
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
       XLSX.writeFile(
         wb,
-        `admin-reports-${fileNameSuffix}-${
-          new Date().toISOString().split("T")[0]
-        }.xlsx`
+        `admin-reports-detailed-${new Date().toISOString().split("T")[0]}.xlsx`
       );
       toast.dismiss(loadingToast);
       toast.success("Report exported successfully!");
@@ -514,7 +525,7 @@ export default function AdminFilteredTransportRequests() {
       !toDate
     ) {
       toast.info("Please enter at least one filter criterion to search.");
-      setRequests([]); // Clear previous results if any
+      setRequests([]);
       return;
     }
     fetchFilteredRequests();
@@ -527,24 +538,15 @@ export default function AdminFilteredTransportRequests() {
     setShowDetailModal(true);
   };
 
-  const handleModalClose = () => {
-    setSelectedReport(null);
-    setTransporterDetails(null);
-    setAdminComment("");
-    setShowDetailModal(false);
-  };
-
   const handleStatusUpdate = async (requestId, status) => {
     try {
       setUpdating(true);
-
       await api.put(`/transport-requests/${requestId}/status`, {
         status,
         adminComment: adminComment.trim(),
       });
-
-      handleModalClose();
-      fetchFilteredRequests(); // Refetch current page
+      setShowDetailModal(false);
+      fetchFilteredRequests();
       toast.success(`Request ${status} successfully`);
     } catch (error) {
       console.error("Error updating status:", error);
@@ -554,897 +556,475 @@ export default function AdminFilteredTransportRequests() {
     }
   };
 
-  const handleOpenInvoicePreviewModal = async (report) => {
-    try {
-      const loadingToast = toast.loading("Loading invoice preview...");
-      const response = await api.get(
-        `/transport-requests/${report.id}/transporter`
-      );
-      const transporterDetails = response.data.success
-        ? response.data.data
-        : null;
-      setSelectedReportForInvoice({ report, transporterDetails });
-      setInvoicePreviewModalOpen(true);
-      toast.dismiss(loadingToast);
-    } catch (error) {
-      console.error("Error loading invoice preview:", error);
-      toast.error("Failed to load invoice preview. Please try again.");
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "in progress":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-yellow-100 text-yellow-800";
-    }
-  };
-
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Filtered Transport Requests
-        </h2>
-        <p className="text-gray-600 mt-1">
-          Filter transport requests by SHIPA No, Request ID, Container No, Date,
-          or Date Range.
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-700">
+      {/* Header Section */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-[1600px] mx-auto px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200">
+                <Filter className="text-white w-6 h-6" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                  Parametric <span className="text-indigo-600 tracking-tighter">Filter</span>
+                </h1>
+                <div className="flex items-center gap-2 text-slate-500 mt-0.5">
+                  <Activity size={14} className="text-emerald-500 animate-pulse" />
+                  <p className="text-[11px] font-bold uppercase tracking-widest leading-none">Global Registry Lookup</p>
+                </div>
+              </div>
+            </div>
 
-      <div className="mb-6 p-4 bg-white rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="SHIPA No"
-            className="px-4 py-2 border rounded-lg"
-            value={shipaNo}
-            onChange={(e) => setShipaNo(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Request ID"
-            className="px-4 py-2 border rounded-lg"
-            value={requestId}
-            onChange={(e) => setRequestId(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Container No"
-            className="px-4 py-2 border rounded-lg"
-            value={containerNo}
-            onChange={(e) => setContainerNo(e.target.value)}
-          />
-          <input
-            type="date"
-            placeholder="Specific Date"
-            className="px-4 py-2 border rounded-lg"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-          <input
-            type="date"
-            placeholder="From Date"
-            className="px-4 py-2 border rounded-lg"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-          <input
-            type="date"
-            placeholder="To Date"
-            className="px-4 py-2 border rounded-lg"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </div>
-        <div className="mt-4 flex justify-end space-x-3">
-          <button
-            onClick={handleSearch}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            disabled={loading}
-          >
-            <Search className="h-5 w-5 mr-2" />
-            {loading ? "Searching..." : "Search"}
-          </button>
-          <button
-            onClick={exportToExcel}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export to Excel
-          </button>
-          <button
-            onClick={exportVehicleWiseExcel}
-            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export Vehicle-wise
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Request Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Service & Vehicle
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Locations
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pricing & Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {requests.map((request) => {
-                const serviceTypes = parseServiceType(request.service_type);
-
-                return (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {`Booking #${request.id}`}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {new Date(request.created_at).toLocaleDateString()}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            SHIPA No: {request.SHIPA_NO}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {request.customer_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {request.customer_email}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {request.vehicle_type}
-                          {request.vehicle_size && ` (${request.vehicle_size})`}
-                        </div>
-                        <div className="mt-1">
-                          {serviceTypes.length > 0 ? (
-                            serviceTypes.map((service, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1"
-                              >
-                                {service}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                              No services specified
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        <div>
-                          Pickup: {request.pickup_location || "Not specified"}
-                        </div>
-                        <div>
-                          Delivery:{" "}
-                          {request.delivery_location || "Not specified"}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(request.requested_price)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                          request.status
-                        )}`}
-                      >
-                        {request.status || "pending"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleViewReport(request)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center"
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {requests.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Package className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              No requests found
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Use the filters above to search for transport requests.
-            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={exportToExcel}
+                disabled={requests.length === 0}
+                className="h-11 px-5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center gap-2.5 font-bold text-[11px] uppercase tracking-wider disabled:opacity-50 transition-all duration-300"
+              >
+                <Download size={16} strokeWidth={2.5} />
+                Detailed XLSX
+              </button>
+              <button
+                onClick={exportVehicleWiseExcel}
+                disabled={requests.length === 0}
+                className="h-11 px-6 rounded-xl bg-indigo-600 text-white flex items-center gap-2.5 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-200 hover:shadow-indigo-300 disabled:opacity-50 transition-all duration-300"
+              >
+                <Truck size={18} strokeWidth={3} />
+                Vehicle-Wise XLSX
+              </button>
+            </div>
           </div>
-        )}
-        {loading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        )}
-      </div>
+        </div>
+      </header>
 
-      {/* Detail Modal */}
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
+        {/* Search Matrix */}
+        <div className="bg-white rounded-[32px] p-8 mb-8 border border-slate-200/60 shadow-xl shadow-slate-100/50">
+          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+            <Layers size={14} className="text-indigo-500" /> Search Matrix
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="relative group">
+              <input
+                type="text"
+                placeholder="SHIPA NO"
+                value={shipaNo}
+                onChange={(e) => setShipaNo(e.target.value)}
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl px-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300 placeholder:text-slate-300"
+              />
+            </div>
+            <div className="relative group">
+              <input
+                type="text"
+                placeholder="REQUEST ID"
+                value={requestId}
+                onChange={(e) => setRequestId(e.target.value)}
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl px-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300 placeholder:text-slate-300"
+              />
+            </div>
+            <div className="relative group">
+              <input
+                type="text"
+                placeholder="CONTAINER NO"
+                value={containerNo}
+                onChange={(e) => setContainerNo(e.target.value)}
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl px-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300 placeholder:text-slate-300"
+              />
+            </div>
+            <div className="relative group">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl px-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300"
+              />
+            </div>
+            <div className="flex items-center gap-2 lg:col-span-1">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="flex-1 h-12 bg-slate-50 border border-slate-200 rounded-2xl px-3 text-[10px] font-black focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300"
+              />
+              <span className="text-slate-300 font-bold text-[9px] uppercase tracking-tighter">TO</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="flex-1 h-12 bg-slate-50 border border-slate-200 rounded-2xl px-3 text-[10px] font-black focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={loading}
+              className="h-12 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-slate-200 disabled:opacity-50"
+            >
+              {loading ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <Search size={16} strokeWidth={3} />
+              )}
+              Execute Search
+            </button>
+          </div>
+        </div>
+
+        {/* Filtered Registry Ledger */}
+        <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-200/60 overflow-hidden">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200/60">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Entry Identity</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Stakeholder Principal</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Service Configuration</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Path</th>
+                  <th className="px-6 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Yield Projection</th>
+                  <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status Audit</th>
+                  <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100/80">
+                {requests.map((request) => {
+                  const serviceTypes = parseServiceType(request.service_type);
+                  return (
+                    <tr key={request.id} className="group hover:bg-slate-50/80 transition-all duration-300">
+                      <td className="px-6 py-6 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[12px] font-black text-slate-900 tracking-tight uppercase">{request.formatted_request_id}</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest italic">{formatDate(request.created_at)}</span>
+                          <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg uppercase self-start mt-2 tracking-tighter border border-indigo-100">SHIPA: {request.SHIPA_NO}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[11px] font-black text-slate-800 uppercase tracking-tight truncate max-w-[180px]">{request.customer_name}</span>
+                          <span className="text-[9px] font-bold text-slate-400 truncate max-w-[180px] italic underline">{request.customer_email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-2">
+                            <Truck size={14} className="text-slate-400" /> {request.vehicle_type}
+                            {request.vehicle_size && <span className="text-slate-400">/ {request.vehicle_size}</span>}
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {serviceTypes.length > 0 ? (
+                              serviceTypes.map((service, idx) => (
+                                <span key={idx} className="text-[8px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase border border-blue-100">
+                                  {service}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Standard Service</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-sm shadow-blue-200"></div>
+                            <span className="truncate max-w-[150px] uppercase tracking-tight">{request.pickup_location || "Source"}</span>
+                          </div>
+                          <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200"></div>
+                            <span className="truncate max-w-[150px] uppercase tracking-tight">{request.delivery_location || "Destination"}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6 text-right">
+                        <span className="text-[13px] font-black text-slate-900 tracking-tighter uppercase">{formatCurrency(request.requested_price)}</span>
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <StatusBadge status={request.status} />
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <button
+                          onClick={() => handleViewReport(request)}
+                          className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all duration-300 group-hover:shadow-xl shadow-slate-100"
+                        >
+                          <Eye size={20} strokeWidth={2.5} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {requests.length === 0 && !loading && (
+            <div className="py-32 flex flex-col items-center gap-6">
+              <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center text-slate-200 border-2 border-dashed border-slate-100">
+                <Search size={48} />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-black text-slate-800 uppercase tracking-[0.3em]">Registry Latent</p>
+                <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest italic">Initialize parametric search to retrieve entries</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Deep Audit Modal */}
       {showDetailModal && selectedReport && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold">Detailed Admin Report</h3>
-                  <p className="text-blue-100">
-                    Request ID: {selectedReport.id}
-                  </p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300"
+            onClick={() => setShowDetailModal(false)}
+          ></div>
+          
+          <div className="relative w-full max-w-7xl max-h-[95vh] bg-[#F8FAFC]/95 border border-white/40 shadow-2xl rounded-[40px] overflow-hidden flex flex-col backdrop-blur-xl animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-slate-800 to-slate-950 p-10 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full -mr-40 -mt-40 blur-3xl"></div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
+                    <ShieldCheck size={36} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-4 mb-2">
+                      <h3 className="text-3xl font-black tracking-tight tracking-tighter uppercase">Registry Audit</h3>
+                      <span className="px-4 py-1.5 bg-indigo-500 text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg shadow-indigo-500/20">CORE ENTRY</span>
+                    </div>
+                    <div className="flex items-center gap-5 text-slate-400 text-[11px] font-bold tracking-widest uppercase">
+                      <span className="flex items-center gap-2"><Layers size={16} /> ID: {selectedReport.formatted_request_id}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
+                      <span className="flex items-center gap-2"><Clock size={16} /> Logged: {formatDate(selectedReport.created_at)}</span>
+                    </div>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all duration-300 border border-white/10"
                 >
-                  ✕
+                  <X size={28} />
                 </button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Request Information */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <FileText className="w-5 h-5 mr-2 text-blue-600" />
-                    Request Information
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Request ID:</span>
-                      <span className="font-medium">
-                        {selectedReport.formatted_request_id}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">SHIPA No:</span>
-                      <span className="font-medium">
-                        {selectedReport.shipa_no}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Tracking ID:</span>
-                      <span className="font-medium">
-                        {selectedReport.tracking_id || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">GR Number:</span>
-                      <span className="font-medium">
-                        {selectedReport.gr_no}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Trip Number:</span>
-                      <span className="font-medium">
-                        {selectedReport.trip_no}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Invoice Number:</span>
-                      <span className="font-medium">
-                        {selectedReport.invoice_no}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Status:</span>
-                      <span>
-                        <StatusBadge status={selectedReport.status} />
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Created Date:</span>
-                      <span className="font-medium">
-                        {formatDate(selectedReport.created_at)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Customer & Route Information */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <Truck className="w-5 h-5 mr-2 text-green-600" />
-                    Customer & Route
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Customer:</span>
-                      <span className="font-medium">
-                        {selectedReport.customer_name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Customer Email:</span>
-                      <span className="font-medium">
-                        {selectedReport.customer_email || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Consignee:</span>
-                      <span className="font-medium">
-                        {selectedReport.consignee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Consigner:</span>
-                      <span className="font-medium">
-                        {selectedReport.consigner || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Pickup Location:</span>
-                      <span className="font-medium">
-                        {selectedReport.pickup_location || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Delivery Location:</span>
-                      <span className="font-medium">
-                        {selectedReport.delivery_location || "N/A"}
-                      </span>
-                    </div>
-                    {selectedReport.stuffing_location && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">
-                          Stuffing Location:
-                        </span>
-                        <span className="font-medium">
-                          {selectedReport.stuffing_location}
-                        </span>
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                {/* Information Columns */}
+                <div className="lg:col-span-4 space-y-8">
+                  {/* Principal & Route */}
+                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-6 flex items-center gap-2">
+                      <Briefcase size={16} className="text-indigo-500" /> Principal Intelligence
+                    </h4>
+                    <div className="space-y-6">
+                      <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 italic">Authorized Entity</p>
+                        <p className="text-[15px] font-black text-slate-900 uppercase tracking-tight leading-tight mb-3">{selectedReport.customer_name}</p>
+                        <div className="flex flex-col gap-2">
+                          <span className="flex items-center gap-2 text-[10px] font-bold text-slate-500 italic"><User size={12} className="text-slate-400" /> ID: {selectedReport.customer_id}</span>
+                          <span className="flex items-center gap-2 text-[10px] font-bold text-slate-500 italic"><Phone size={12} className="text-slate-400" /> {selectedReport.customer_phone || "UNSPECIFIED"}</span>
+                        </div>
                       </div>
-                    )}
+                      
+                      <div className="space-y-6 pt-2">
+                        <div className="relative pl-8">
+                          <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full shadow-sm shadow-blue-200"></div>
+                          </div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Origin Node</p>
+                          <p className="text-[12px] font-black text-slate-800 uppercase leading-relaxed">{selectedReport.pickup_location}</p>
+                        </div>
+                        <div className="relative pl-8">
+                          <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-emerald-600 rounded-full shadow-sm shadow-emerald-200"></div>
+                          </div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Terminal Node</p>
+                          <p className="text-[12px] font-black text-slate-800 uppercase leading-relaxed">{selectedReport.delivery_location}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Operational Metrics */}
+                  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-6 flex items-center gap-2">
+                      <Scale size={16} className="text-indigo-500" /> Operational Matrix
+                    </h4>
+                    <div className="grid grid-cols-2 gap-5">
+                      <div className="p-5 bg-slate-50 rounded-2xl flex flex-col gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fleet Unit</span>
+                        <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">{selectedReport.vehicle_type}</span>
+                      </div>
+                      <div className="p-5 bg-slate-50 rounded-2xl flex flex-col gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Count</span>
+                        <span className="text-[12px] font-black text-slate-900 tracking-tight">{selectedReport.vehicle_count} ACTIVE</span>
+                      </div>
+                      <div className="p-5 bg-slate-50 rounded-2xl flex flex-col gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cargo Payload</span>
+                        <span className="text-[12px] font-black text-slate-900 tracking-tight">{selectedReport.cargo_weight || "0"} KG</span>
+                      </div>
+                      <div className="p-5 bg-slate-50 rounded-2xl flex flex-col gap-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Units</span>
+                        <span className="text-[12px] font-black text-slate-900 tracking-tight">{selectedReport.total_containers} UNIT(S)</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Service & Vehicle Details */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <Truck className="w-5 h-5 mr-2 text-blue-600" />
-                    Service & Vehicle
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Vehicle Type:</span>
-                      <span className="font-medium">
-                        {selectedReport.vehicle_type || "N/A"}{" "}
-                        {selectedReport.vehicle_size &&
-                          `(${selectedReport.vehicle_size})`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Commodity:</span>
-                      <span className="font-medium">
-                        {selectedReport.commodity || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Cargo Type:</span>
-                      <span className="font-medium">
-                        {selectedReport.cargo_type || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Services:</span>
+                {/* Audit Controls & Details */}
+                <div className="lg:col-span-8 space-y-8">
+                  {/* Financial Status Panel */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-6">
+                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Revenue Flow</span>
+                        <div className="p-2 bg-emerald-50 rounded-xl"><ArrowUpRight className="text-emerald-500" size={18} /></div>
+                      </div>
                       <div>
-                        {selectedReport.service_types.length > 0 ? (
-                          selectedReport.service_types.map((service, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1"
-                            >
-                              {service}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-gray-500">None</span>
-                        )}
+                        <p className="text-3xl font-black text-emerald-600 tracking-tighter uppercase">{formatCurrency(selectedReport.requested_price)}</p>
+                        <p className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-[0.2em] italic underline">Gross Service Fee</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-6">
+                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Fleet Cost</span>
+                        <div className="p-2 bg-amber-50 rounded-xl"><Truck className="text-amber-500" size={18} /></div>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-amber-600 tracking-tighter uppercase">{formatCurrency(selectedReport.vehicle_charges)}</p>
+                        <p className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-[0.2em] italic underline">Operational Expenditure</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-6">
+                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Yield Delta</span>
+                        <div className={`p-2 rounded-xl ${selectedReport.profit_loss >= 0 ? "bg-blue-50" : "bg-rose-50"}`}>
+                          <Activity className={selectedReport.profit_loss >= 0 ? "text-blue-500" : "text-rose-500"} size={18} />
+                        </div>
+                      </div>
+                      <div>
+                        <p className={`text-3xl font-black tracking-tighter uppercase ${selectedReport.profit_loss >= 0 ? "text-blue-600" : "text-rose-600"}`}>
+                          {formatCurrency(selectedReport.profit_loss)}
+                        </p>
+                        <p className={`text-[10px] font-black uppercase mt-2 tracking-widest ${selectedReport.profit_loss >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                          {selectedReport.profit_loss_percentage.toFixed(2)}% MARGIN
+                        </p>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Financial Details */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-                    Financial Details
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Service Charges:</span>
-                      <span className="font-medium text-green-600">
-                        {formatCurrency(selectedReport.service_charges)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Vehicle Charges:</span>
-                      <span className="font-medium text-orange-600">
-                        {formatCurrency(selectedReport.vehicle_charges)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-gray-500 font-medium">
-                        Profit/Loss:
-                      </span>
-                      <span
-                        className={`font-bold ${
-                          selectedReport.profit_loss >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {formatCurrency(selectedReport.profit_loss)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Profit Margin:</span>
-                      <span
-                        className={`font-medium ${
-                          selectedReport.profit_loss_percentage >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {selectedReport.profit_loss_percentage.toFixed(2)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Information */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
-                    Payment Information
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Total Paid:</span>
-                      <span className="font-medium text-blue-600">
-                        {formatCurrency(selectedReport.total_paid)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Outstanding:</span>
-                      <span className="font-medium text-red-600">
-                        {formatCurrency(selectedReport.outstanding_amount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Payment Status:</span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          selectedReport.payment_status === "Fully Paid"
-                            ? "bg-green-100 text-green-800"
-                            : selectedReport.payment_status === "Partially Paid"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {selectedReport.payment_status}
-                      </span>
-                    </div>
-                    {selectedReport.transaction_data && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Transaction ID:</span>
-                          <span className="font-medium">
-                            {selectedReport.transaction_data.id}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Payment Method:</span>
-                          <span className="font-medium">
-                            {selectedReport.transaction_data.payment_method ||
-                              "N/A"}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Cargo Details */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <Package className="w-5 h-5 mr-2 text-purple-600" />
-                    Cargo Details
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Container Numbers:</span>
-                      <span className="font-medium">
-                        {selectedReport.container_numbers || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">20ft Containers:</span>
-                      <span className="font-medium">
-                        {selectedReport.containers_20ft || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">40ft Containers:</span>
-                      <span className="font-medium">
-                        {selectedReport.containers_40ft || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-gray-500 font-medium">
-                        Total Containers:
-                      </span>
-                      <span className="font-bold">
-                        {selectedReport.total_containers}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Cargo Weight:</span>
-                      <span className="font-medium">
-                        {selectedReport.cargo_weight || "N/A"}{" "}
-                        {selectedReport.cargo_weight ? "kg" : ""}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Vehicle Count:</span>
-                      <span className="font-medium">
-                        {selectedReport.vehicle_count}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Timeline */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-                    Timeline
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Created:</span>
-                      <span className="font-medium">
-                        {formatDateTime(selectedReport.created_at)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Updated:</span>
-                      <span className="font-medium">
-                        {formatDateTime(selectedReport.updated_at)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Expected Pickup:</span>
-                      <span className="font-medium">
-                        {formatDate(selectedReport.expected_pickup_date)}{" "}
-                        {selectedReport.expected_pickup_time || ""}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Expected Delivery:</span>
-                      <span className="font-medium">
-                        {formatDate(selectedReport.expected_delivery_date)}{" "}
-                        {selectedReport.expected_delivery_time || ""}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Actual Delivery:</span>
-                      <span className="font-medium">
-                        {formatDate(selectedReport.actual_delivery_date) ||
-                          "Pending"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Vehicle-Container Mapping */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <Truck className="w-5 h-5 mr-2 text-green-600" />
-                    Vehicle-Container Mapping
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    {Object.entries(
-                      selectedReport.vehicle_container_mapping
-                    ).map(([vehicle, info]) => (
-                      <div key={vehicle} className="flex justify-between">
-                        <span className="text-gray-500">{vehicle}:</span>
-                        <span className="font-medium">
-                          {info.containers.join(", ")} [
-                          {info.container_types.join(", ")}/
-                          {info.container_sizes.join(", ")}]
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Actions */}
-              <div className="mt-8 bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-red-600" />
-                  Admin Actions
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Admin Comment
-                    </label>
+                  {/* Administrative Comment Ledger */}
+                  <div className="bg-white rounded-[32px] p-10 shadow-sm border border-slate-200/60">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                      <FileText size={16} className="text-slate-400" /> Administrative Audit Commentary
+                    </h4>
                     <textarea
                       value={adminComment}
                       onChange={(e) => setAdminComment(e.target.value)}
-                      className="mt-1 block w-full border border-gray-300 rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows="4"
-                      placeholder="Enter comments or notes..."
+                      placeholder="ENTER AUDIT NOTES FOR THIS ENTRY..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[24px] p-6 text-[12px] font-bold tracking-wider placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all duration-300 min-h-[160px] uppercase leading-relaxed"
                     />
                   </div>
-                  <div className="flex space-x-4">
-                    {["approved", "rejected", "in progress", "completed"].map(
-                      (status) => (
-                        <button
-                          key={status}
-                          onClick={() =>
-                            handleStatusUpdate(selectedReport.id, status)
-                          }
-                          disabled={updating}
-                          className={`px-4 py-2 rounded-lg text-white font-medium ${
-                            status === "approved"
-                              ? "bg-green-600 hover:bg-green-700"
-                              : status === "rejected"
-                              ? "bg-red-600 hover:bg-red-700"
-                              : status === "in progress"
-                              ? "bg-blue-600 hover:bg-blue-700"
-                              : "bg-purple-600 hover:bg-purple-700"
-                          } ${updating ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </button>
-                      )
-                    )}
+
+                  {/* Status Decision Terminal */}
+                  <div className="bg-white rounded-[32px] p-10 shadow-sm border border-slate-200/60">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
+                      <ShieldCheck size={16} className="text-indigo-500" /> Registry Decision Terminal
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+                      <button
+                        onClick={() => handleStatusUpdate(selectedReport.id, 'approved')}
+                        disabled={updating}
+                        className="h-16 rounded-2xl bg-blue-50 text-blue-700 font-black text-[11px] uppercase tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm shadow-blue-100 active:scale-95 disabled:opacity-50"
+                      >
+                        <CheckCircle2 size={18} /> AUTHORIZE
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(selectedReport.id, 'rejected')}
+                        disabled={updating}
+                        className="h-16 rounded-2xl bg-rose-50 text-rose-700 font-black text-[11px] uppercase tracking-widest border border-rose-100 hover:bg-rose-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm shadow-rose-100 active:scale-95 disabled:opacity-50"
+                      >
+                        <X size={18} /> REJECT
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(selectedReport.id, 'in progress')}
+                        disabled={updating}
+                        className="h-16 rounded-2xl bg-indigo-50 text-indigo-700 font-black text-[11px] uppercase tracking-widest border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm shadow-indigo-100 active:scale-95 disabled:opacity-50"
+                      >
+                        <Truck size={18} /> EXECUTE
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(selectedReport.id, 'completed')}
+                        disabled={updating}
+                        className="h-16 rounded-2xl bg-emerald-50 text-emerald-700 font-black text-[11px] uppercase tracking-widest border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm shadow-emerald-100 active:scale-95 disabled:opacity-50"
+                      >
+                        <Package size={18} /> FINALIZE
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Transporter Details */}
-              {Object.keys(selectedReport.vehicle_container_mapping).length >
-                0 && (
-                <div className="mt-8">
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
-                    <Truck className="w-5 h-5 mr-2 text-green-600" />
-                    Transporter Details
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(
-                      selectedReport.vehicle_container_mapping
-                    ).map(([vehicle, info], index) => (
-                      <div
-                        key={index}
-                        className="bg-white border rounded-lg p-4"
-                      >
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Vehicle Number:
-                            </span>
-                            <span className="font-medium">{vehicle}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Container Numbers:
-                            </span>
-                            <span className="font-medium">
-                              {info.containers.join(", ") || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Container Types:
-                            </span>
-                            <span className="font-medium">
-                              {info.container_types.join(", ") || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Container Sizes:
-                            </span>
-                            <span className="font-medium">
-                              {info.container_sizes.join(", ") || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Transporter Name:
-                            </span>
-                            <span className="font-medium">
-                              {info.transporter_name || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Driver Name:</span>
-                            <span className="font-medium">
-                              {info.driver_name || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Driver Phone:</span>
-                            <span className="font-medium">
-                              {info.driver_phone || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Total Charge:</span>
-                            <span className="font-medium text-orange-600">
-                              {formatCurrency(info.total_charge)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Additional Charge:
-                            </span>
-                            <span className="font-medium text-orange-600">
-                              {formatCurrency(info.additional_charges)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Special Instructions */}
-              {selectedReport.special_instructions && (
-                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">
-                    Special Instructions:
-                  </h4>
-                  <p className="text-sm text-gray-700">
-                    {selectedReport.special_instructions}
-                  </p>
-                </div>
-              )}
             </div>
-            <div className="border-t bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+
+            {/* Modal Footer */}
+            <div className="p-10 border-t border-slate-200/60 bg-white flex items-center justify-between">
+              <div className="flex items-center gap-4 text-slate-400">
+                <ShieldCheck size={24} />
+                <span className="text-[11px] font-black uppercase tracking-widest">Entry State Verified by Admin Protocol</span>
+              </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="h-14 px-10 rounded-2xl bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all duration-300 shadow-xl shadow-slate-200 active:scale-95"
               >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  const data = [
-                    {
-                      "Request ID": selectedReport.id,
-                      "Tracking ID": selectedReport.tracking_id || "N/A",
-                      "GR No": selectedReport.gr_no,
-                      "Trip No": selectedReport.trip_no,
-                      "Invoice No": selectedReport.invoice_no,
-                      "SHIPA No": selectedReport.shipa_no,
-                      "Container Numbers": selectedReport.container_numbers,
-                      "Vehicle-Container Mapping":
-                        Object.entries(selectedReport.vehicle_container_mapping)
-                          .map(
-                            ([vehicle, info]) =>
-                              `${vehicle}: ${info.containers.join(
-                                ", "
-                              )} [${info.container_types.join(
-                                ", "
-                              )}/${info.container_sizes.join(", ")}]`
-                          )
-                          .join("; ") || "N/A",
-                      "Customer Name": selectedReport.customer_name,
-                      "Customer Email": selectedReport.customer_email || "N/A",
-                      Consignee: selectedReport.consignee || "N/A",
-                      Consigner: selectedReport.consigner || "N/A",
-                      "Pickup Location":
-                        selectedReport.pickup_location || "N/A",
-                      "Delivery Location":
-                        selectedReport.delivery_location || "N/A",
-                      "Vehicle Type": selectedReport.vehicle_type || "N/A",
-                      Commodity: selectedReport.commodity || "N/A",
-                      Status: selectedReport.status,
-                      "Service Charges": selectedReport.service_charges,
-                      "Vehicle Charges": selectedReport.vehicle_charges,
-                      "Profit/Loss": selectedReport.profit_loss,
-                      "Profit %":
-                        selectedReport.profit_loss_percentage.toFixed(2),
-                      "Total Paid": selectedReport.total_paid,
-                      Outstanding: selectedReport.outstanding_amount,
-                      "Payment Status": selectedReport.payment_status,
-                      "Created Date": formatDate(selectedReport.created_at),
-                      "Delivery Date": formatDate(
-                        selectedReport.expected_delivery_date
-                      ),
-                      "Containers 20ft": selectedReport.containers_20ft || 0,
-                      "Containers 40ft": selectedReport.containers_40ft || 0,
-                      "Total Containers": selectedReport.total_containers,
-                      "Cargo Weight": selectedReport.cargo_weight || 0,
-                      "Vehicle Count": selectedReport.vehicle_count,
-                    },
-                  ];
-                  const ws = XLSX.utils.json_to_sheet(data);
-                  const wb = XLSX.utils.book_new();
-                  XLSX.utils.book_append_sheet(wb, ws, "Report");
-                  XLSX.writeFile(
-                    wb,
-                    `admin-report-${selectedReport.id}-${
-                      new Date().toISOString().split("T")[0]
-                    }.xlsx`
-                  );
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export Report
+                TERMINATE AUDIT
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Invoice Preview Modal */}
+      {/* Internal CSS */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #E2E8F0;
+          border-radius: 20px;
+          border: 2px solid transparent;
+          background-clip: content-box;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #CBD5E1;
+          border: 2px solid transparent;
+          background-clip: content-box;
+        }
+        @keyframes zoom-in-95 {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-in {
+          animation-fill-mode: forwards;
+        }
+        .zoom-in-95 {
+          animation-name: zoom-in-95;
+        }
+      `}} />
+
+      {/* Reused Components */}
       {isInvoicePreviewModalOpen && selectedReportForInvoice && (
         <InvoicePreviewModal
           isOpen={isInvoicePreviewModalOpen}
           onClose={() => setInvoicePreviewModalOpen(false)}
-          report={selectedReportForInvoice.report}
+          reportData={selectedReportForInvoice.report}
           transporterDetails={selectedReportForInvoice.transporterDetails}
         />
       )}

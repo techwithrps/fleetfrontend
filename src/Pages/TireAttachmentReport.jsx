@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import {
@@ -6,9 +6,22 @@ import {
   bedAPI,
   tireMasterAPI,
   tirePositionAPI,
-  tireAttachmentAPI,
   driverAPI,
+  tireAttachmentAPI,
 } from "../utils/Api";
+import {
+  Search,
+  Truck,
+  RotateCcw,
+  FileText,
+  Calendar,
+  Eye,
+  MapPin,
+  ChevronRight,
+  Download,
+  AlertCircle,
+  Package,
+} from "lucide-react";
 
 const TireAttachmentReport = () => {
   const [equipment, setEquipment] = useState([]);
@@ -50,10 +63,7 @@ const TireAttachmentReport = () => {
     if (!value) return "";
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return "";
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${month}/${day}/${year}`;
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   };
 
   const filteredRows = reportRows.filter((row) => {
@@ -95,7 +105,7 @@ const TireAttachmentReport = () => {
       if (reportRes.success) setReportRows(reportRes.data || []);
 
     } catch (error) {
-      toast.error(error.message || "Failed to load mapping data");
+      toast.error("Audit failure");
     } finally {
       setLoading(false);
     }
@@ -107,9 +117,8 @@ const TireAttachmentReport = () => {
 
   const exportTyreAttachReport = (format = "xlsx") => {
     const dataToExport = searchTerm ? filteredRows : reportRows;
-
     if (!dataToExport.length) {
-      toast.error("No data to export");
+      toast.error("No transactional records found");
       return;
     }
 
@@ -132,190 +141,177 @@ const TireAttachmentReport = () => {
       };
     });
 
-    if (format === "csv") {
-        const header = Object.keys(rows[0]).join(",");
-        const body = rows.map(obj => Object.values(obj).map(val => `"${String(val ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-        const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `TYRE_REPORT_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        return;
-    }
-
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "TYRE_REPORT");
-    XLSX.writeFile(wb, `TYRE_REPORT_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `TYRE_AUDIT_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 relative min-h-screen">
-      {loading && (
-        <div className="fixed top-0 left-0 right-0 z-[9999]">
-          <div className="h-1 w-full bg-blue-100 overflow-hidden">
-            <div className="h-full bg-blue-600 animate-[progress_1.5s_ease-in-out_infinite] origin-left"></div>
+    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+      <div className="bg-white border-b border-slate-200 mb-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+              <RotateCcw className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                Tire Attachment Report
+              </h1>
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1">
+                History of tire changes on vehicles
+              </p>
+            </div>
           </div>
-          <div className="absolute right-6 top-6">
-             <div className="w-5 h-5 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="flex items-center gap-3">
+             <div className="relative flex items-center">
+                <Search className="w-4 h-4 absolute left-3 text-text-muted" />
+                <input
+                  type="text"
+                  placeholder="Search Vehicle No..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleVehicleLookup()}
+                  className="input-clean pl-10 pr-4 py-2 text-[11px] w-64"
+                />
+             </div>
+             <button onClick={handleVehicleLookup} className="btn-action px-6 py-2">
+                Search
+             </button>
+             <button onClick={() => exportTyreAttachReport()} className="btn-action bg-emerald-600 border-emerald-600 hover:bg-emerald-700 px-6 py-2 flex items-center gap-2">
+                <Download className="w-3.5 h-3.5" />
+                Export Excel
+             </button>
           </div>
-        </div>
-      )}
-
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="h-10 w-2 bg-blue-600 rounded-full"></div>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Fleet Intelligence Report</h1>
-            <p className="text-slate-500 font-medium lowercase">tire / bed attach detach report</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3 bg-white p-2 rounded-[2rem] shadow-xl border border-slate-100">
-           <div className="relative flex-1 min-w-[300px]">
-              <input
-                type="text"
-                placeholder="Enter Vehicle Number (e.g. MH12AB1234)"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleVehicleLookup()}
-                className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
-              />
-              <svg className="w-6 h-6 absolute left-4 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-           </div>
-           <button 
-              onClick={handleVehicleLookup}
-              className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
-            >
-              LOOKUP
-           </button>
         </div>
       </div>
 
-      {selectedVehicle && (
-        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
-              <div className="flex items-center gap-4 pr-6 lg:border-r border-slate-100">
-                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div className="max-w-[1600px] mx-auto px-6 mt-8">
+        {selectedVehicle && (
+          <div className="card-premium p-6 bg-white mb-8 border-l-4 border-l-primary animate-in slide-in-from-top-4 duration-500">
+            <div className="flex flex-col lg:flex-row items-center gap-8">
+              <div className="flex items-center gap-4 pr-8 lg:border-r border-border">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Truck className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Vehicle</p>
-                  <p className="text-2xl font-black text-slate-900 leading-none">{selectedVehicle.EQUIPMENT_NO}</p>
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-0.5">Vehicle Number</p>
+                  <p className="text-xl font-display font-bold text-foreground tracking-tight">{selectedVehicle.EQUIPMENT_NO}</p>
                 </div>
               </div>
 
-              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Driver</p>
-                  <p className="text-sm font-bold text-slate-800 truncate">
-                    {driverMap[String(selectedVehicle.DRIVER_ATTACH_ID)]?.DRIVER_NAME || "Not Assigned"}
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Driver Name</p>
+                  <p className="text-[11px] font-bold text-foreground truncate">
+                    {driverMap[String(selectedVehicle.DRIVER_ATTACH_ID)]?.DRIVER_NAME || "NOT ASSIGNED"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Model / Make</p>
-                  <p className="text-sm font-bold text-slate-800">{selectedVehicle.MODEL || "-"}</p>
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Configuration</p>
+                  <p className="text-[11px] font-bold text-foreground">{selectedVehicle.MODEL || "-"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Vendor</p>
-                  <p className="text-sm font-bold text-slate-800 truncate">{selectedVehicle.VENDOR_NAME || "Own"}</p>
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Engine No</p>
-                  <p className="text-sm font-bold text-slate-800 truncate">{selectedVehicle.ENG_NO || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Status</p>
-                  <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-black ${selectedVehicle.STATUS === 'A' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
-                    {selectedVehicle.STATUS === 'A' ? 'AVAILABLE' : 'IN-USE'}
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Resource Status</p>
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${selectedVehicle.STATUS === 'A' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                    {selectedVehicle.STATUS === 'A' ? 'Deployed' : 'Operational'}
                   </span>
                 </div>
-              </div>
-
-              <div className="lg:pl-6 lg:border-l border-slate-100">
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Insurance Up To</p>
-                  <p className="text-xs font-bold text-slate-600">{formatDateOnly(selectedVehicle.INS_VALIDITY) || "N/A"}</p>
+                <div>
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Insurance Expiry</p>
+                  <p className="text-[11px] font-bold text-foreground">{formatDateOnly(selectedVehicle.INS_VALIDITY) || "N/A"}</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-        <div className="px-8 py-6 bg-gradient-to-r from-slate-50 to-white border-b border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight">Tyre History & Movements</h2>
-              <p className="text-sm text-slate-500 font-medium mt-1">
-                Historical records of all tyre changes for {searchTerm ? `"${searchTerm}"` : "the entire fleet"}.
-              </p>
-            </div>
+        <div className="card-premium overflow-hidden bg-white shadow-xl shadow-slate-200/40">
+          <div className="bg-slate-50/80 px-6 py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => exportTyreAttachReport("xlsx")}
-                className="inline-flex items-center px-5 py-2.5 bg-emerald-600 text-white text-sm font-black rounded-2xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-200"
-              >
-                Export Results
-              </button>
+              <Package className="w-4 h-4 text-primary/60" />
+              <h3 className="text-[12px] font-bold text-foreground uppercase tracking-widest">
+                History List {searchTerm && `: Details of ${searchTerm}`}
+              </h3>
             </div>
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-tight">
+              Total <span className="text-foreground">{filteredRows.length} Entries Found</span>
+            </span>
           </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-slate-50/50">
-              <tr>
-                {["S.No", "VEHICLE/BED NO", "ATTACH_FOR", "TIRE_NO", "POSITION", "NAME", "ATTACHED", "DETACHED", "STATUS", "REMARKS"].map((header) => (
-                  <th key={header} className="text-left px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-gray-100">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="px-6 py-20 text-center text-slate-400 font-bold italic">
-                    {searchTerm ? `No movement records found for "${searchTerm}"` : "No records found in tyre history."}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white border-b border-border">
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">ID</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Vehicle/Bed</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Tire Number</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Tire Position</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Attach Date</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Detach Date</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest text-center">Status</th>
                 </tr>
-              ) : (
-                filteredRows.map((row, index) => (
-                  <tr key={row.TIRE_ATTACH_ID} className="hover:bg-blue-50/20 transition-colors group">
-                    <td className="px-6 py-4 text-xs font-bold text-slate-400">
-                      {index + 1}
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {filteredRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center gap-3 opacity-30">
+                        <AlertCircle className="w-10 h-10" />
+                        <p className="text-[11px] font-bold uppercase tracking-widest">No History Found</p>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 font-black">
-                      {String(row.ATTACH_FOR || "").toUpperCase() === "BED" 
-                        ? (bedMap[String(row.BED_ID)]?.BED_NO || row.BED_ID || "-")
-                        : (equipmentMap[String(row.EQUIPMENT_ID)]?.EQUIPMENT_NO || row.EQUIPMENT_ID || "-")
-                      }
-                    </td>
-                    <td className="px-6 py-4 text-xs font-black">
-                      <span className={`px-2.5 py-1 rounded-lg ${String(row.ATTACH_FOR).toUpperCase() === 'BED' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {String(row.ATTACH_FOR || "").toUpperCase() === "BED" ? "BED" : "HORSE"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-black text-slate-900">{tireMap[String(row.TIRE_ID)]?.TIRE_NO || row.TIRE_ID || ""}</td>
-                    <td className="px-6 py-4 text-sm text-blue-600 font-black">{positionMap[String(row.POSITION_ID)]?.POSITION_CODE || ""}</td>
-                    <td className="px-6 py-4 text-[11px] text-slate-500 font-bold">{positionMap[String(row.POSITION_ID)]?.POSITION_NAME || ""}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500 font-medium">{formatDateOnly(row.ATTACH_DATE)}</td>
-                    <td className="px-4 py-4 text-xs text-slate-500 font-medium">{formatDateOnly(row.DETACH_DATE) || "-"}</td>
-                    <td className="px-6 py-4 text-xs">
-                      <span className={`px-3 py-1 rounded-full font-black tracking-wider shadow-sm border ${String(row.ATTACH_STATUS || "").toUpperCase() === 'DETACHED' ? 'bg-slate-50 text-slate-400 border-slate-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                        {String(row.ATTACH_STATUS || "ATTACHED").toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-400 max-w-[150px] truncate italic" title={row.REMARKS}>{row.REMARKS || "-"}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredRows.map((row, index) => {
+                    const isBed = String(row.ATTACH_FOR || "").toUpperCase() === "BED";
+                    const position = positionMap[String(row.POSITION_ID)] || {};
+                    return (
+                      <tr key={index} className="hover:bg-slate-50/40 transition-colors group">
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-400">
+                          {String(index + 1).padStart(2, '0')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-[12px] font-bold text-foreground uppercase tracking-tight">
+                              {isBed ? (bedMap[String(row.BED_ID)]?.BED_NO || row.BED_ID || "-") : (equipmentMap[String(row.EQUIPMENT_ID)]?.EQUIPMENT_NO || row.EQUIPMENT_ID || "-")}
+                            </span>
+                            <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isBed ? 'text-indigo-500' : 'text-primary/70'}`}>
+                              {isBed ? 'Trailer Bed' : 'Vehicle'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-foreground uppercase">{tireMap[String(row.TIRE_ID)]?.TIRE_NO || row.TIRE_ID || "N/A"}</span>
+                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-tighter mt-0.5">Asset ID: {row.TIRE_ID}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-primary uppercase tracking-widest">{position.POSITION_CODE || "N/A"}</span>
+                            <span className="text-[9px] font-medium text-text-muted uppercase truncate max-w-[120px]">{position.POSITION_NAME || ""}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-600">
+                          {formatDateOnly(row.ATTACH_DATE)}
+                        </td>
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-400">
+                          {formatDateOnly(row.DETACH_DATE) || "ACTIVE"}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border shadow-sm ${String(row.ATTACH_STATUS || "").toUpperCase() === 'DETACHED' ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                            {String(row.ATTACH_STATUS || "ATTACHED").toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

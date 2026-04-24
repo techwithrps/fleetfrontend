@@ -551,58 +551,51 @@ export const TransporterDetails = ({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow mt-6">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">
-            Transporter Details {vehicleCount > 1 ? "s" : ""}
-          </h3>
-        </div>
-        <div className="p-6 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
-          <span className="ml-3">Loading transporter details...</span>
-        </div>
+      <div className="card-premium mt-8 flex flex-col items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Synchronizing Transporter Intelligence...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mt-6">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+    <div className="card-premium mt-8 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="px-6 py-5 border-b border-border bg-slate-50/30 flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Transporter Details {vehicleCount > 1 ? "s" : ""}
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+            Transporter Logistics {vehicleCount > 1 ? "Assets" : "Asset"}
           </h3>
           {transportRequestId && (
-            <p className="text-sm text-gray-600 mt-1">
-              Request ID: {transportRequestId}
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1">
+              Deployment ID: #{transportRequestId}
             </p>
           )}
         </div>
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={addVehicle}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all active:scale-95"
           >
-            Add Vehicle
+            + Add Asset
           </button>
           <button
             type="button"
             onClick={removeVehicle}
             disabled={vehicleCount <= 1}
-            className={`px-4 py-2 rounded-md text-white transition-colors duration-200 ${
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 border ${
               vehicleCount <= 1
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-red-600 hover:bg-red-700"
+                ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                : "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
             }`}
           >
-            Remove Vehicle
+            - Remove Asset
           </button>
         </div>
       </div>
 
       <div className="p-6">
-        <form onSubmit={handleOpenModal} className="space-y-8">
+        <form onSubmit={handleOpenModal} className="space-y-10">
           <VehicleBasicDetailsTable
             vehicleDataList={vehicleDataList}
             updateVehicleData={updateVehicleData}
@@ -613,75 +606,61 @@ export const TransporterDetails = ({
             services={services}
             updateVehicleData={updateVehicleData}
           />
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-lg font-medium text-gray-900 mb-2">
-                  Summary
+          
+          <div className="card-premium bg-slate-50/50 p-6 border-slate-200">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Total Active Assets</span>
+                  <span className="text-xl font-display font-bold text-foreground">{vehicleCount} Vehicles</span>
                 </div>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div>Request ID: {transportRequestId}</div>
-                  <div>Total Vehicles: {vehicleCount}</div>
+                <div className="h-10 w-px bg-slate-200 hidden md:block"></div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Deployment Status</span>
+                  <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 uppercase tracking-tighter self-start border border-emerald-100">Ready for Dispatch</span>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-blue-600">
-                  ₹
-                  {totalAmount.toLocaleString("en-IN", {
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest block mb-1">Cumulative Financial Commitment</span>
+                <div className="text-3xl font-display font-bold text-primary">
+                  ₹{totalAmount.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </div>
-                <div className="text-sm text-gray-600">Total Amount</div>
               </div>
             </div>
           </div>
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+
+          <div className="flex justify-end items-center gap-4 pt-8 border-t border-border">
             <button
               type="button"
               onClick={onBack}
-              className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+              className="px-6 py-2.5 text-[11px] font-bold text-text-muted uppercase tracking-widest hover:bg-slate-50 rounded-lg transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`
-                px-8 py-3 rounded-md text-white font-medium transition-all duration-200
-                ${
-                  isSubmitting
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                }
-                flex items-center
-              `}
+              className="btn-action px-8 py-2.5 flex items-center justify-center gap-3"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-3"></div>
-                  Saving {vehicleCount} Vehicle{vehicleCount > 1 ? "s" : ""}...
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Processing Deployment...</span>
                 </>
               ) : (
                 <>
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  Save All Transporter Details {vehicleCount > 1 ? "s" : ""}
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Confirm & Save Logistics</span>
                 </>
               )}
             </button>
           </div>
+
           <ContainerDetailsTable
             vehicleDataList={vehicleDataList}
             updateVehicleData={updateVehicleData}

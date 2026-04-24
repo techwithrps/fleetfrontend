@@ -5,10 +5,11 @@ import {
   Lock,
   ChevronDown,
   LogIn,
-  CheckCircle,
 } from "lucide-react";
 import { authAPI, setAuthToken } from "../utils/Api";
 import { locationAPI } from "../utils/Api"; // example
+import loginHeroImage from "../images/login-hero.jpg";
+import elogisolLogo from "../images/elogisol-logo.png";
 
 export default function Login() {
   const [locations, setLocations] = useState([]); // State to hold locations
@@ -50,7 +51,10 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Access check error:", err);
-      const msg = typeof err === 'string' ? err : err.message || "Invalid credentials or access error";
+      const msg =
+        typeof err === "string"
+          ? err
+          : err?.error || err?.message || "Invalid credentials or access error";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -131,21 +135,12 @@ export default function Login() {
           <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Logo and Title */}
             <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-indigo-200 mb-6 transform transition-transform hover:scale-105">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  ></path>
-                </svg>
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-slate-200 shadow-lg mb-6 p-2">
+                <img
+                  src={elogisolLogo}
+                  alt="eLOGisol"
+                  className="max-h-full max-w-full object-contain"
+                />
               </div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Fleet Management
@@ -351,58 +346,13 @@ export default function Login() {
       </div>
 
       {/* Image/Background Section - Hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-900">
-        {/* Abstract shapes / Gradients */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-blob"></div>
-        <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] bg-indigo-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-[-20%] left-[20%] w-[60%] h-[60%] bg-purple-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-4000"></div>
-
-        {/* Pattern overlay */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50"></div>
-
-        <div className="relative z-10 flex flex-col justify-center w-full h-full p-16 lg:p-24 backdrop-blur-[2px]">
-          <div className="max-w-xl">
-            <h2 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
-              Manage Your Fleet with <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">Confidence</span>
-            </h2>
-            <p className="text-lg text-slate-300 mb-12 font-light leading-relaxed">
-              Our comprehensive fleet management system helps you track vehicles, manage drivers, and optimize routes for maximum efficiency and reduced operational costs.
-            </p>
-            
-            <div className="space-y-6">
-              {[
-                "Real-time vehicle tracking and advanced analytics",
-                "Comprehensive maintenance scheduling & alerts",
-                "Detailed reporting and fleet performance metrics"
-              ].map((text, i) => (
-                <div key={i} className="flex items-center transform transition-transform hover:translate-x-2 duration-300">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 mr-4 shadow-lg">
-                    <CheckCircle className="w-5 h-5 text-indigo-300 flex-shrink-0" />
-                  </div>
-                  <p className="text-slate-200 font-medium">{text}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-16 pt-8 border-t border-white/10 flex items-center">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-lg">
-                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
-                  </div>
-                ))}
-              </div>
-              <div className="ml-5">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                  ))}
-                </div>
-                <div className="text-sm text-slate-300 mt-1 font-medium">Trusted by 500+ companies</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#dfe6ff]">
+        <img
+          src={loginHeroImage}
+          alt="Fleet logistics illustration"
+          className="absolute inset-0 h-full w-full object-cover object-[38%_center]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/55 via-slate-900/20 to-indigo-300/15" />
       </div>
     </div>
   );

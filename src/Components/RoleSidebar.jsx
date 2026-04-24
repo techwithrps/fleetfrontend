@@ -14,6 +14,9 @@ export const RoleSidebar = (props) => {
   switch (role) {
     case "admin":
       return <AdminSidebar {...props} />;
+    case "operations":
+    case "finance":
+      return <CustomerSidebar {...props} />;
     case "accounts":
       return <AdminSidebar {...props} />;
     case "reports & mis":

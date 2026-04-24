@@ -195,6 +195,39 @@ const EquipmentDetails = () => {
     return validators[name] ? validators[name]() : "";
   };
 
+  const toDateOnly = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
+
+  const validatePolicyDatesAgainstPurchaseDate = () => {
+    const purchaseDate = toDateOnly(formData.PURCHAGE_DATE);
+    if (!purchaseDate) return "";
+
+    const dateFields = [
+      { key: "REGISTRATION_DATE", label: "Registration Date" },
+      { key: "INS_VALIDITY", label: "Insurance Validity" },
+      { key: "PERMIT_FROM", label: "Permit From" },
+      { key: "PERMIT_TO", label: "Permit To" },
+      { key: "STATE_PERMIT_FROM", label: "State Permit From" },
+      { key: "STATE_PERMIT_TO", label: "State Permit To" },
+      { key: "POLLUTION_VALIDITY", label: "Pollution Validity" },
+      { key: "ROAD_TAX_VALIDITY", label: "Road Tax Validity" },
+    ];
+
+    for (const field of dateFields) {
+      const valueDate = toDateOnly(formData[field.key]);
+      if (valueDate && valueDate < purchaseDate) {
+        return `${field.label} cannot be before Purchase Date`;
+      }
+    }
+
+    return "";
+  };
+
   const handleFieldBlur = (e) => {
     const { name, value } = e.target;
     if (!name) return;
@@ -304,6 +337,11 @@ const EquipmentDetails = () => {
     }
     if (!validateEquipmentForm()) {
       toast.error("Please fix highlighted vehicle fields");
+      return;
+    }
+    const purchaseDateValidationError = validatePolicyDatesAgainstPurchaseDate();
+    if (purchaseDateValidationError) {
+      toast.error(purchaseDateValidationError);
       return;
     }
 
@@ -591,6 +629,7 @@ const EquipmentDetails = () => {
                         name="REGISTRATION_DATE"
                         value={formData.REGISTRATION_DATE}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -809,6 +848,7 @@ const EquipmentDetails = () => {
                         name="INS_VALIDITY"
                         value={formData.INS_VALIDITY}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -821,6 +861,7 @@ const EquipmentDetails = () => {
                         name="PERMIT_FROM"
                         value={formData.PERMIT_FROM}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -833,6 +874,7 @@ const EquipmentDetails = () => {
                         name="PERMIT_TO"
                         value={formData.PERMIT_TO}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -845,6 +887,7 @@ const EquipmentDetails = () => {
                         name="STATE_PERMIT_FROM"
                         value={formData.STATE_PERMIT_FROM}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -857,6 +900,7 @@ const EquipmentDetails = () => {
                         name="STATE_PERMIT_TO"
                         value={formData.STATE_PERMIT_TO}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -869,6 +913,7 @@ const EquipmentDetails = () => {
                         name="POLLUTION_VALIDITY"
                         value={formData.POLLUTION_VALIDITY}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />
@@ -881,6 +926,7 @@ const EquipmentDetails = () => {
                         name="ROAD_TAX_VALIDITY"
                         value={formData.ROAD_TAX_VALIDITY}
                         onChange={handleInputChange}
+                        min={formData.PURCHAGE_DATE || undefined}
                         disabled={!isEditing}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
                       />

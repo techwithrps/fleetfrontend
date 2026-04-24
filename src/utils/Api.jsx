@@ -161,6 +161,15 @@ export const authAPI = {
       return false;
     }
   },
+
+  switchLocation: async (locationId) => {
+    try {
+      const response = await api.post("/auth/switch-location", { locationId });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 // User Management API

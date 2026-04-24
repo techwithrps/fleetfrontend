@@ -158,20 +158,20 @@ const ServiceRequestForm = ({
 
   return (
     <div className="lg:col-span-2 bg-white rounded-lg shadow mt-8 pt-4">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">
-          {safeRequestData.id ? "Edit Trip Request" : "Create New Trip"}
+      <div className="px-10 py-8 border-b border-slate-100 bg-slate-50/50">
+        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+          {safeRequestData.id ? "Operational Deployment Edit" : "Initialize New Deployment"}
         </h3>
         {safeRequestData.id && (
-          <p className="text-sm text-gray-600 mt-1">
-            Request ID: {safeRequestData.id}
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+            Registry ID: #{safeRequestData.id}
           </p>
         )}
       </div>
-      <div className="p-6">
+      <div className="p-10">
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 bg-white p-6 rounded-lg shadow request-form"
+          className="space-y-12"
         >
           {/* Vehicle Details Section */}
           <VehicleDetailsSection
@@ -204,21 +204,21 @@ const ServiceRequestForm = ({
           />
 
           {/* Form Buttons */}
-          <div className="flex space-x-4">
+          <div className="flex gap-4 pt-10 border-t border-slate-100">
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 ${
-                isSubmitting ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-              } text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center`}
+              className={`flex-[2] h-14 rounded-2xl ${
+                isSubmitting ? "bg-indigo-400" : "bg-slate-900 hover:bg-indigo-600"
+              } text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-xl shadow-slate-200`}
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-                  {loadingButtonText}
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white mr-3"></div>
+                  {loadingButtonText.toUpperCase()}
                 </>
               ) : (
-                submitButtonText
+                submitButtonText.toUpperCase()
               )}
             </button>
 
@@ -226,9 +226,9 @@ const ServiceRequestForm = ({
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 h-14 rounded-2xl border border-slate-200 text-slate-500 font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all"
               >
-                Cancel Edit
+                ABORT EDIT
               </button>
             )}
           </div>

@@ -169,7 +169,7 @@ const VendorSearchInput = ({ value, onChange, placeholder }) => {
         <input
           ref={inputRef}
           type="text"
-          className="w-full min-w-[160px] border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="input-clean pl-3 py-1.5 min-w-[160px]"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -183,49 +183,49 @@ const VendorSearchInput = ({ value, onChange, placeholder }) => {
         />
 
         {loading && (
-          <div className="absolute right-2 top-2">
-            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-primary"></div>
           </div>
         )}
       </div>
 
-      {/* Improved dropdown with constrained dimensions */}
       {isOpen && filteredVendors.length > 0 && (
         <div
           ref={dropdownRef}
-          className="fixed bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto"
+          className="fixed bg-white border border-border rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           style={getDropdownStyles()}
         >
-          {filteredVendors.map((vendor) => (
-            <div
-              key={vendor.VENDOR_ID}
-              className={`px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
-                vendor.VENDOR_ID === "SELF" ? "bg-green-50 font-medium" : ""
-              }`}
-              onClick={() => {
-                setSearchTerm(vendor.VENDOR_NAME);
-                onChange(vendor.VENDOR_NAME);
-                setIsOpen(false);
-              }}
-            >
+          <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+            {filteredVendors.map((vendor) => (
               <div
-                className={`font-medium text-gray-900 truncate ${
-                  vendor.VENDOR_ID === "SELF" ? "text-green-800" : ""
+                key={vendor.VENDOR_ID}
+                className={`px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-border/50 last:border-b-0 group ${
+                  vendor.VENDOR_ID === "SELF" ? "bg-emerald-50/30" : ""
                 }`}
+                onClick={() => {
+                  setSearchTerm(vendor.VENDOR_NAME);
+                  onChange(vendor.VENDOR_NAME);
+                  setIsOpen(false);
+                }}
               >
-                {vendor.VENDOR_NAME}
-                {vendor.VENDOR_ID === "SELF" && (
-                  <span className="ml-2 text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
-                    Own Vehicles
-                  </span>
-                )}
+                <div className="flex items-center justify-between gap-2">
+                  <div className={`text-[12px] font-bold truncate group-hover:text-primary transition-colors ${
+                    vendor.VENDOR_ID === "SELF" ? "text-emerald-700" : "text-foreground"
+                  }`}>
+                    {vendor.VENDOR_NAME}
+                  </div>
+                  {vendor.VENDOR_ID === "SELF" && (
+                    <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-tighter border border-emerald-200">
+                      Fleet Asset
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] font-medium text-text-muted truncate mt-0.5 uppercase tracking-tight">
+                  {vendor.VENDOR_CODE || "No code"} • {vendor.CITY || vendor.ADDRESS || "Location Unknown"}
+                </div>
               </div>
-              <div className="text-sm text-gray-500 truncate">
-                {vendor.VENDOR_CODE || "No code"} |{" "}
-                {vendor.CITY || vendor.ADDRESS || "No location"}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -572,7 +572,7 @@ const DriverSearchInput = ({ value, onChange, vendorName, placeholder }) => {
         <input
           ref={inputRef}
           type="text"
-          className="w-full min-w-[140px] border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="input-clean pl-3 py-1.5 min-w-[140px] disabled:bg-slate-50/50 disabled:text-text-muted/60"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -587,69 +587,65 @@ const DriverSearchInput = ({ value, onChange, vendorName, placeholder }) => {
         />
 
         {loading && (
-          <div className="absolute right-2 top-2">
-            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-primary"></div>
           </div>
         )}
       </div>
 
-      {/* Enhanced dropdown with vehicle information */}
       {isOpen && filteredDrivers.length > 0 && (
         <div
           ref={dropdownRef}
-          className="fixed bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto"
+          className="fixed bg-white border border-border rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           style={getDropdownStyles()}
         >
-          {filteredDrivers.map((driver) => (
-            <div
-              key={driver.DRIVER_ID}
-              className={`px-3 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
-                vendorId === "SELF" || driver.IS_SELF_VEHICLE
-                  ? "bg-green-50"
-                  : ""
-              }`}
-              onClick={() => {
-                console.log("Selected driver/vehicle:", driver);
-                setSearchTerm(driver.DRIVER_NAME);
-                onChange(driver.DRIVER_NAME, driver);
-                setIsOpen(false);
-              }}
-            >
-              <div className="font-medium text-gray-900 truncate">
-                {driver.DRIVER_NAME}
-                {(vendorId === "SELF" || driver.IS_SELF_VEHICLE) && (
-                  <span className="ml-2 text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
-                    Own
-                  </span>
-                )}
-              </div>
-              <div className="text-sm text-gray-500 truncate mt-1">
-                {getContactInfo(driver)}
-              </div>
+          <div className="max-h-[220px] overflow-y-auto custom-scrollbar">
+            {filteredDrivers.map((driver) => (
               <div
-                className={`text-sm truncate mt-1 ${
-                  vendorId === "SELF" || driver.IS_SELF_VEHICLE
-                    ? "text-green-600"
-                    : "text-blue-600"
+                key={driver.DRIVER_ID}
+                className={`px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-border/50 last:border-b-0 group ${
+                  vendorId === "SELF" || driver.IS_SELF_VEHICLE ? "bg-emerald-50/30" : ""
                 }`}
+                onClick={() => {
+                  setSearchTerm(driver.DRIVER_NAME);
+                  onChange(driver.DRIVER_NAME, driver);
+                  setIsOpen(false);
+                }}
               >
-                {getVehicleInfo(driver)}
+                <div className="flex items-center justify-between gap-2">
+                  <div className={`text-[12px] font-bold truncate group-hover:text-primary transition-colors ${
+                    vendorId === "SELF" || driver.IS_SELF_VEHICLE ? "text-emerald-700" : "text-foreground"
+                  }`}>
+                    {driver.DRIVER_NAME}
+                  </div>
+                  {(vendorId === "SELF" || driver.IS_SELF_VEHICLE) && (
+                    <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase tracking-tighter border border-emerald-200">
+                      Internal Asset
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] font-medium text-text-muted truncate mt-0.5 uppercase tracking-tight">
+                  {getContactInfo(driver)}
+                </div>
+                <div className={`text-[10px] font-bold truncate mt-1 uppercase tracking-wider ${
+                  vendorId === "SELF" || driver.IS_SELF_VEHICLE ? "text-emerald-600" : "text-primary"
+                }`}>
+                  {getVehicleInfo(driver)}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {isOpen && filteredDrivers.length === 0 && searchTerm && !loading && (
         <div
           ref={dropdownRef}
-          className="fixed bg-white border border-gray-300 rounded-md shadow-lg"
+          className="fixed bg-white border border-border rounded-lg shadow-xl"
           style={getDropdownStyles()}
         >
-          <div className="px-3 py-2 text-gray-500 text-sm">
-            {vendorId === "SELF"
-              ? `No vehicles found matching "${searchTerm}"`
-              : `No drivers found matching "${searchTerm}"`}
+          <div className="px-4 py-3 text-[10px] font-bold text-text-muted uppercase tracking-widest text-center">
+            No logistics matches found
           </div>
         </div>
       )}
@@ -840,142 +836,142 @@ const VehicleBasicDetailsTable = ({ vehicleDataList, updateVehicleData }) => {
   };
 
   return (
-    <div>
-      <h4 className="text-lg font-medium text-gray-900 mb-4">
-        Vehicle & Driver Information
-        <span className="text-sm font-normal text-gray-500 ml-2">
-          (All fields marked with * are required)
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between px-1">
+        <h4 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+          <span className="w-1 h-4 bg-primary rounded-full"></span>
+          Logistic Asset Configuration
+        </h4>
+        <span className="text-[10px] font-bold text-text-muted uppercase tracking-tighter">
+          * Required Parameters for Dispatch
         </span>
-      </h4>
+      </div>
 
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                Vehicle #
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
-                Vendor Name *
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                Vehicle Number *
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                Assigner Name *
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[160px]">
-                Driver Contact *
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {/* Use uniqueVehicleDataList instead of vehicleDataList */}
-            {uniqueVehicleDataList.map((vehicle, index) => {
-              // Find original index for validation errors
-              const originalIndex = vehicleDataList.findIndex(
-                (v) => v.vehicleIndex === vehicle.vehicleIndex
-              );
+      <div className="card-premium overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-border">
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest w-16 text-center">
+                  Asset #
+                </th>
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[200px]">
+                  Logistics Provider *
+                </th>
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[160px]">
+                  Vehicle Registration *
+                </th>
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[160px]">
+                  Assigner / Captain *
+                </th>
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[160px]">
+                  Communication *
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {uniqueVehicleDataList.map((vehicle, index) => {
+                const originalIndex = vehicleDataList.findIndex(
+                  (v) => v.vehicleIndex === vehicle.vehicleIndex
+                );
 
-              return (
-                <tr
-                  key={`vehicle-${vehicle.vehicleIndex}`}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
-                    <div className="flex items-center justify-center">
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
-                        {vehicle.vehicleIndex}
+                return (
+                  <tr
+                    key={`vehicle-${vehicle.vehicleIndex}`}
+                    className="hover:bg-slate-50/30 transition-colors group"
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <span className="text-[11px] font-bold text-primary bg-primary/5 border border-primary/10 px-2 py-0.5 rounded-md">
+                        {vehicle.vehicleIndex.toString().padStart(2, '0')}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
-                    <VendorSearchInput
-                      value={getVendorName(vehicle)}
-                      onChange={(value) => handleVendorChange(index, value)}
-                      placeholder="Search and select vendor"
-                    />
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
-                    <div>
-                      <input
-                        type="text"
-                        className={`w-full min-w-[140px] border ${
-                          validationErrors[`${originalIndex}-vehicleNumber`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                        value={vehicle.vehicleNumber}
-                        onChange={(e) =>
-                          handleInputChange(
-                            index,
-                            "vehicleNumber",
-                            e.target.value.toUpperCase()
-                          )
-                        }
-                        placeholder="e.g., MH01AB1234"
-                        pattern="[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}"
-                        title="Vehicle number must be in format like MH01AB1234"
-                        required
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <VendorSearchInput
+                        value={getVendorName(vehicle)}
+                        onChange={(value) => handleVendorChange(index, value)}
+                        placeholder="Search Provider..."
                       />
-                      {validationErrors[`${originalIndex}-vehicleNumber`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {validationErrors[`${originalIndex}-vehicleNumber`]}
-                        </p>
-                      )}
-                    </div>
-                  </td>
-                  {/* Continue with rest of the table cells using the same pattern... */}
-                  <td className="px-3 py-4 whitespace-nowrap">
-                    <DriverSearchInput
-                      value={vehicle.driverName}
-                      onChange={(value, driverData) =>
-                        handleDriverSelection(index, value, driverData)
-                      }
-                      vendorName={getVendorName(vehicle)}
-                      placeholder="Select driver"
-                    />
-                    {validationErrors[`${originalIndex}-driverName`] && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {validationErrors[`${originalIndex}-driverName`]}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
-                    <div>
-                      <input
-                        type="tel"
-                        className={`w-full min-w-[160px] border ${
-                          validationErrors[`${originalIndex}-driverContact`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                        value={vehicle.driverContact}
-                        onChange={(e) =>
-                          handleInputChange(
-                            index,
-                            "driverContact",
-                            e.target.value.replace(/\D/g, "").slice(0, 10)
-                          )
-                        }
-                        placeholder="10-digit mobile number"
-                        pattern="\d{10}"
-                        title="Driver contact must be exactly 10 digits"
-                        maxLength="10"
-                        required
-                      />
-                      {validationErrors[`${originalIndex}-driverContact`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {validationErrors[`${originalIndex}-driverContact`]}
-                        </p>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          className={`input-clean py-1.5 px-3 text-[12px] font-bold uppercase tracking-wider ${
+                            validationErrors[`${originalIndex}-vehicleNumber`]
+                              ? "border-rose-300 bg-rose-50/30"
+                              : ""
+                          }`}
+                          value={vehicle.vehicleNumber}
+                          onChange={(e) =>
+                            handleInputChange(
+                              index,
+                              "vehicleNumber",
+                              e.target.value.toUpperCase()
+                            )
+                          }
+                          placeholder="e.g. MH01..."
+                          pattern="[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}"
+                          required
+                        />
+                        {validationErrors[`${originalIndex}-vehicleNumber`] && (
+                          <p className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter ml-1">
+                            {validationErrors[`${originalIndex}-vehicleNumber`]}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="space-y-1">
+                        <DriverSearchInput
+                          value={vehicle.driverName}
+                          onChange={(value, driverData) =>
+                            handleDriverSelection(index, value, driverData)
+                          }
+                          vendorName={getVendorName(vehicle)}
+                          placeholder="Select Personnel..."
+                        />
+                        {validationErrors[`${originalIndex}-driverName`] && (
+                          <p className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter ml-1">
+                            {validationErrors[`${originalIndex}-driverName`]}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="space-y-1">
+                        <input
+                          type="tel"
+                          className={`input-clean py-1.5 px-3 text-[12px] font-bold ${
+                            validationErrors[`${originalIndex}-driverContact`]
+                              ? "border-rose-300 bg-rose-50/30"
+                              : ""
+                          }`}
+                          value={vehicle.driverContact}
+                          onChange={(e) =>
+                            handleInputChange(
+                              index,
+                              "driverContact",
+                              e.target.value.replace(/\D/g, "").slice(0, 10)
+                            )
+                          }
+                          placeholder="10-digit number"
+                          pattern="\d{10}"
+                          maxLength="10"
+                          required
+                        />
+                        {validationErrors[`${originalIndex}-driverContact`] && (
+                          <p className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter ml-1">
+                            {validationErrors[`${originalIndex}-driverContact`]}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

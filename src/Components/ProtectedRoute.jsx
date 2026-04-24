@@ -6,6 +6,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
   const { user, loading, handleAuthError, isTokenExpired } = useAuth();
   const navigate = useNavigate();
   const [isValidating, setIsValidating] = useState(true);
+  const customerLikeRoles = new Set(["customer", "operations", "finance"]);
 
   useEffect(() => {
     const validateAccess = async () => {
@@ -15,9 +16,10 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
       if (user) {
         // If user has required role, allow access (case-insensitive)
         const userRole = user.role?.toLowerCase();
+        const effectiveRole = customerLikeRoles.has(userRole) ? "customer" : userRole;
         
         let hasAccess = allowedRoles.length === 0 || 
-          allowedRoles.some(role => role.toLowerCase() === userRole);
+          allowedRoles.some(role => role.toLowerCase() === effectiveRole);
 
         // Additional check for granular page access if pageName is provided
         // Special Case: 'admin' role bypasses granular page checks
@@ -38,6 +40,8 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
           case "admin":
             navigate("/admin-dashboard", { replace: true });
             break;
+          case "operations":
+          case "finance":
           case "customer":
             navigate("/customer-dashboard", { replace: true });
             break;
@@ -86,8 +90,9 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
 
   // Final check for render
   const userRole = user.role?.toLowerCase();
+  const effectiveRole = customerLikeRoles.has(userRole) ? "customer" : userRole;
   let hasAccess = allowedRoles.length === 0 || 
-    allowedRoles.some(role => role.toLowerCase() === userRole);
+    allowedRoles.some(role => role.toLowerCase() === effectiveRole);
 
   // Additional check for granular page access if pageName is provided
   // Special Case: 'admin' role bypasses granular page checks
@@ -102,6 +107,8 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
     switch (userRole) {
       case "admin":
         return <Navigate to="/admin-dashboard" replace />;
+      case "operations":
+      case "finance":
       case "customer":
         return <Navigate to="/customer-dashboard" replace />;
       case "driver":

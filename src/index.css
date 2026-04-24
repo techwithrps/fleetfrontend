@@ -1,9 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Fleetio-inspired Professional Palette */
+  --sidebar-bg: #0d2119;
+  --sidebar-hover: #1a332a;
+  --sidebar-active: #009a49;
+  --sidebar-text: #e2e8f0;
+  
+  --primary: #009a49;
+  --primary-hover: #00813d;
+  
+  --background: #f8fafb;
+  --foreground: #1a1a1a;
+  --text-muted: #64748b;
+  
+  --border: #e2e8f0;
+  --card-bg: #ffffff;
+  
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
 @layer base {
   html, body {
-    @apply max-w-[100vw] overflow-x-hidden m-0 p-0;
+    @apply max-w-[100vw] overflow-x-hidden m-0 p-0 antialiased;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; /* Standard professional small text base */
+    background-color: var(--background);
+    color: var(--foreground);
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Fleetio-style Sidebar Link */
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-1.5 text-[13px] font-medium transition-all duration-200 rounded-md;
+    color: var(--sidebar-text);
+  }
+  
+  .nav-link:hover {
+    background-color: var(--sidebar-hover);
+  }
+  
+  .nav-link.active {
+    background-color: var(--sidebar-active);
+    color: white;
+  }
+
+  /* Professional Card */
+  .card-premium {
+    @apply bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden;
+  }
+
+  /* Clean Input */
+  .input-clean {
+    @apply w-full px-3 py-1.5 bg-white border border-slate-200 rounded-md text-[13px] outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10;
+  }
+
+  /* Small Action Button */
+  .btn-action {
+    @apply px-4 py-1.5 bg-primary hover:bg-primary-hover text-white text-[13px] font-semibold rounded-md transition-all duration-200 active:scale-95;
+  }
+  
+  /* Sidebar styles */
+  .sidebar-container {
+    @apply bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] h-screen fixed left-0 top-0 overflow-y-auto z-50 transition-all duration-300;
+  }
+}
+
+/* Custom Scrollbar for a cleaner look */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
+}
+
+/* Table styling for that professional look */
+table {
+  @apply w-full border-collapse text-[13px];
+}
+
+th {
+  @apply text-left py-3 px-4 bg-slate-50 font-semibold text-slate-600 border-b border-slate-200;
+}
+
+td {
+  @apply py-3 px-4 border-b border-slate-100 text-slate-700;
+}
+
+tr:hover td {
+  @apply bg-slate-50/50;
 }

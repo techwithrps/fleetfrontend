@@ -128,7 +128,7 @@ const AdminLayout = ({ children }) => {
         />
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 p-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 px-6 pb-6 pt-0">
           {children ? (
             children
           ) : (

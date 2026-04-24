@@ -10,7 +10,6 @@ import {
   authAPI,
   setAuthToken,
   isTokenExpired,
-  isValidTokenFormat,
   clearAuthData,
 } from "../utils/Api";
 
@@ -143,6 +142,8 @@ export const AuthProvider = ({ children }) => {
           case "admin":
             navigate("/admin-dashboard");
             break;
+          case "operations":
+          case "finance":
           case "customer":
             navigate("/customer-dashboard");
             break;
@@ -168,11 +169,37 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  
+  const switchLocation = async (locationId) => {
+    try {
+      setLoading(true);
+      const response = await authAPI.switchLocation(locationId);
+      
+      // Update token and user
+      localStorage.setItem("token", response.token);
+      setAuthToken(response.token);
+      
+      // Update local user object with new terminal selection
+      const updatedUser = { ...user, terminalId: response.terminalId };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      toast.success("Location switched successfully");
+      
+      return response;
+    } catch (error) {
+      toast.error(error.message || "Failed to switch location.");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const value = {
     user,
     login,
     logout,
+    switchLocation,
     loading,
     handleAuthError,
     checkUserSession,

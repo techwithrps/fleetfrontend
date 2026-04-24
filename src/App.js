@@ -83,7 +83,7 @@ const DashboardLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex overflow-hidden w-full max-w-[100vw]">
+    <div className="min-h-screen bg-background flex overflow-hidden w-full max-w-[100vw]">
       <LogoutModal 
         isOpen={showLogoutModal} 
         onClose={() => setShowLogoutModal(false)}
@@ -107,7 +107,7 @@ const DashboardLayout = ({ children }) => {
           toggleSidebar={toggleSidebar}
           handleLogout={handleLogoutClick}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 p-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 p-4 sm:p-6 lg:p-8">
           {React.cloneElement(children, sidebarProps)}
         </main>
       </div>
@@ -125,6 +125,8 @@ const RoleRedirect = () => {
   switch (role) {
     case "admin":
       return <Navigate to="/admin-dashboard" />;
+    case "operations":
+    case "finance":
     case "customer":
       return <Navigate to="/customer-dashboard" />;
     case "driver":

@@ -97,99 +97,101 @@ const VehicleChargesTable = ({
   };
 
   return (
-    <div>
-      <h4 className="text-lg font-medium text-gray-900 mb-4">
-        Vehicle Charges
-      </h4>
+    <div className="flex flex-col gap-4 mt-8">
+      <div className="flex items-center justify-between px-1">
+        <h4 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+          <span className="w-1 h-4 bg-primary rounded-full"></span>
+          Financial Deployment Matrix
+        </h4>
+        <span className="text-[10px] font-bold text-text-muted uppercase tracking-tighter">
+          All Charges in INR (₹)
+        </span>
+      </div>
 
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="w-full table-auto divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                Vehicle Number
-              </th>
-
-              {services.map((serviceName) => (
-                <th
-                  key={serviceName}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]"
-                >
-                  Vendor Charges (INR)
+      <div className="card-premium overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-border">
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest w-32">
+                  Asset Identifier
                 </th>
-              ))}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[160px]">
-                Additional Charges (INR)
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[160px]">
-                Total Charge (INR)
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {/* Use uniqueVehicleDataList instead of vehicleDataList */}
-            {uniqueVehicleDataList.map((vehicle, index) => (
-              <tr
-                key={`charges-${vehicle.vehicleIndex || index}`}
-                className="hover:bg-gray-50"
-              >
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    {vehicle.vehicleNumber ||
-                      `Vehicle ${vehicle.vehicleIndex || index + 1}`}
-                  </span>
-                </td>
 
                 {services.map((serviceName) => (
-                  <td key={serviceName} className="px-4 py-4 whitespace-nowrap">
+                  <th
+                    key={serviceName}
+                    className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[140px]"
+                  >
+                    Provider: {serviceName}
+                  </th>
+                ))}
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[160px]">
+                  Auxiliary Commitment
+                </th>
+                <th className="px-4 py-2.5 text-[9px] font-bold text-text-muted uppercase tracking-widest min-w-[160px]">
+                  Total Financial Value
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {uniqueVehicleDataList.map((vehicle, index) => (
+                <tr
+                  key={`charges-${vehicle.vehicleIndex || index}`}
+                  className="hover:bg-slate-50/30 transition-colors group"
+                >
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="text-[11px] font-bold text-primary bg-primary/5 border border-primary/10 px-2 py-1 rounded-md block text-center truncate max-w-[120px]">
+                      {vehicle.vehicleNumber || `Asset ${vehicle.vehicleIndex || index + 1}`}
+                    </span>
+                  </td>
+
+                  {services.map((serviceName) => (
+                    <td key={serviceName} className="px-4 py-3 whitespace-nowrap">
+                      <input
+                        type="number"
+                        className="input-clean py-1.5 px-3 text-[12px] font-bold min-w-[120px]"
+                        value={vehicle.serviceCharges?.[serviceName] || ""}
+                        onChange={(e) =>
+                          handleServiceChargeChange(
+                            index,
+                            serviceName,
+                            e.target.value
+                          )
+                        }
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                    </td>
+                  ))}
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <input
                       type="number"
-                      className="min-w-[140px] border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={vehicle.serviceCharges?.[serviceName] || ""}
+                      className="input-clean py-1.5 px-3 text-[12px] font-bold min-w-[120px]"
+                      value={vehicle.additionalCharges || ""}
                       onChange={(e) =>
-                        handleServiceChargeChange(
-                          index,
-                          serviceName,
-                          e.target.value
-                        )
+                        handleAdditionalChargeChange(index, e.target.value)
                       }
-                      placeholder={`${serviceName} charge`}
+                      placeholder="0.00"
                       min="0"
                       step="0.01"
                     />
                   </td>
-                ))}
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    className="min-w-[140px] border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    value={vehicle.additionalCharges || ""}
-                    onChange={(e) =>
-                      handleAdditionalChargeChange(index, e.target.value)
-                    }
-                    placeholder="Additional charges"
-                    min="0"
-                    step="0.01"
-                  />
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <input
-                    type="text"
-                    className="min-w-[160px] border border-gray-300 rounded-md p-2 text-sm bg-gray-50 cursor-not-allowed font-medium text-gray-900"
-                    value={`₹${(vehicle.totalCharge || 0).toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )}`}
-                    readOnly
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="bg-slate-100/50 border border-border rounded-lg py-1.5 px-3 min-w-[140px] text-right">
+                      <span className="text-[12px] font-bold text-foreground">
+                        ₹{(vehicle.totalCharge || 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
