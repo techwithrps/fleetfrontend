@@ -7,10 +7,12 @@ import {
   Settings,
   LogOut,
   MapPin,
+  Smartphone,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
 import { locationAPI } from "../utils/Api";
+import PWAInstallButton from "./PWAInstallButton";
 
 const Header = ({
   toggleMobileMenu,
@@ -120,6 +122,9 @@ const Header = ({
       </div>
 
       <div className="flex items-center space-x-4">
+        {/* PWA Install Button (Mobile Only) */}
+        <PWAInstallButton />
+
         {/* Notifications */}
         <div className="relative dropdown-container">
           <button
