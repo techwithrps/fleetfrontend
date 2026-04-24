@@ -14,6 +14,22 @@ import {
   ChevronRight,
   MapPinned,
   ScanSearch,
+  ClipboardList,
+  Edit3,
+  History,
+  Search,
+  Link2,
+  Wrench,
+  PlusCircle,
+  CheckCircle,
+  Building2,
+  CircleDot,
+  LayoutGrid,
+  Mail,
+  BarChart3,
+  TrendingUp,
+  CreditCard,
+  User,
 } from "lucide-react";
 import elogisolLogo from "../images/elogisol-logo.png";
 export function CustomerSidebar({
@@ -65,7 +81,7 @@ export function CustomerSidebar({
       ],
     },
     {
-      title: "Road Operations",
+      title: "Daily Tasks",
       items: [
         {
           name: "My Shipments",
@@ -86,26 +102,26 @@ export function CustomerSidebar({
           description: "Vehicle Inspection Survey",
         },
         {
-          name: "Bed Attach/Detach",
-          icon: Truck,
+          name: "Assign Trailer",
+          icon: Link2,
           path: "bed-attachment",
           description: "Map Beds to Vehicles",
         },
         {
-          name: "Tyre Attach/Detach",
-          icon: Truck,
+          name: "Tire Attach/Detach",
+          icon: Wrench,
           path: "tire-attachment",
           description: "Map Tyres to Positions",
         },
         {
           name: "Job Order",
-          icon: Truck,
+          icon: PlusCircle,
           path: "job-order",
           description: "Start Trip & Advance",
         },
         {
           name: "Job Order Close",
-          icon: Truck,
+          icon: CheckCircle,
           path: "job-order-close",
           description: "Close Trip & Settle",
         },
@@ -123,41 +139,41 @@ export function CustomerSidebar({
       ],
     },
     {
-      title: "Master Data",
+      title: "Master",
       items: [
         {
           name: "Vendor Master",
-          icon: Package,
+          icon: Building2,
           path: "vendors",
           description: "Manage Vendors",
         },
         {
           name: "Vehicle Master",
-          icon: FileText,
+          icon: Truck,
           path: "vehicle-master",
           description: "Manage Vehicles",
         },
         {
           name: "Driver Master",
-          icon: Truck,
+          icon: User,
           path: "driver-master",
           description: "Manage Drivers",
         },
         {
-          name: "Tyre Master",
-          icon: FileText,
+          name: "Tire Master",
+          icon: CircleDot,
           path: "tire-master",
           description: "Manage Tyre Inventory",
         },
         {
-          name: "Tyre Position Master",
-          icon: FileText,
+          name: "Tire Position Master",
+          icon: LayoutGrid,
           path: "tire-position-master",
           description: "Configure Tyre Positions",
         },
         {
-          name: "Bed Master",
-          icon: FileText,
+          name: "Trailer Master",
+          icon: Truck,
           path: "bed-master",
           description: "Manage Bed Inventory",
         },
@@ -168,12 +184,12 @@ export function CustomerSidebar({
       items: [
         {
           name: "Transport Reports",
-          icon: Settings,
+          icon: BarChart3,
           path: "reports",
           description: "View Transport Reports",
         },
         {
-          name: "Tyre Attachment Report",
+          name: "Tire Attachment Report",
           icon: FileText,
           path: "tire-attachment-report",
           description: "View Tyre Movement History",
