@@ -278,7 +278,7 @@ const TireAttachmentReport = () => {
                               {isBed ? (bedMap[String(row.BED_ID)]?.BED_NO || row.BED_ID || "-") : (equipmentMap[String(row.EQUIPMENT_ID)]?.EQUIPMENT_NO || row.EQUIPMENT_ID || "-")}
                             </span>
                             <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isBed ? 'text-indigo-500' : 'text-primary/70'}`}>
-                              {isBed ? 'Trailer Bed' : 'Vehicle'}
+                              {isBed ? 'Bed' : 'Vehicle'}
                             </span>
                           </div>
                         </td>

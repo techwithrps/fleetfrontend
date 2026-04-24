@@ -270,14 +270,14 @@ export default function EditRequestModal({ request, onClose, onUpdate }) {
                 required
               >
                 <option value="">Select Vehicle Type</option>
-                <option value="Trailer">Trailer</option>
+                <option value="Trailer">Bed</option>
                 <option value="Truck">Truck</option>
               </select>
             </div>
             {formData.vehicleType === "Trailer" && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Trailer Size
+                  Bed Size
                 </label>
                 <input
                   type="text"

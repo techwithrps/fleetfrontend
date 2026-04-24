@@ -102,10 +102,10 @@ export function CustomerSidebar({
           description: "Vehicle Inspection Survey",
         },
         {
-          name: "Assign Trailer",
+          name: "Bed Attach Detach",
           icon: Link2,
           path: "bed-attachment",
-          description: "Map Beds to Vehicles",
+          description: "Link Bed to Vehicle",
         },
         {
           name: "Tire Attach/Detach",
@@ -172,10 +172,10 @@ export function CustomerSidebar({
           description: "Configure Tyre Positions",
         },
         {
-          name: "Trailer Master",
+          name: "Bed Master",
           icon: Truck,
           path: "bed-master",
-          description: "Manage Bed Inventory",
+          description: "Manage All Beds",
         },
       ],
     },

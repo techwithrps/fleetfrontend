@@ -92,10 +92,10 @@ export function AdminSidebar({
           description: "Find & Track Trips",
         },
         {
-          name: "Assign Trailer",
+          name: "Bed Attach Detach",
           icon: Link2,
           path: "bed-attachment",
-          description: "Link Trailer to Vehicle",
+          description: "Link Bed to Vehicle",
         },
         {
           name: "Tire Attach/Detach",
@@ -151,10 +151,10 @@ export function AdminSidebar({
           description: "Configure Wheel Slots",
         },
         {
-          name: "Trailer Master",
+          name: "Bed Master",
           icon: Truck,
           path: "bed-master",
-          description: "Manage All Trailers",
+          description: "Manage All Beds",
         },
         {
           name: "Email Settings",

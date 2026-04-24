@@ -87,15 +87,15 @@ const Header = ({
             onClick={() => setShowLocationMenu(!showLocationMenu)}
             className="flex items-center space-x-2 px-3 py-1.5 hover:bg-background border border-border rounded-md transition-all group"
           >
-            <MapPin className="h-4 w-4 text-primary" />
-            <span className="text-[13px] font-semibold text-foreground">
+            <MapPin className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-[13px] font-semibold text-foreground truncate max-w-[120px] md:max-w-none">
               {currentLocationName}
             </span>
-            <ChevronDown className={`h-3 w-3 text-text-muted transition-transform duration-200 ${showLocationMenu ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-3 w-3 text-text-muted transition-transform duration-200 shrink-0 ${showLocationMenu ? 'rotate-180' : ''}`} />
           </button>
 
           {showLocationMenu && (
-            <div className="absolute top-full left-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl shadow-slate-200/60 border border-slate-100 z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden backdrop-blur-xl bg-white/95">
+            <div className="absolute top-full left-0 mt-3 w-[calc(100vw-2rem)] sm:w-64 bg-white rounded-3xl shadow-2xl shadow-slate-200/60 border border-slate-100 z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden backdrop-blur-xl bg-white/95">
               <div className="px-5 py-3 border-b border-slate-50 mb-1 flex items-center justify-between">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Location</span>
                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
@@ -122,6 +122,42 @@ const Header = ({
       </div>
 
       <div className="flex items-center space-x-4">
+        {/* Mobile Location Switcher Shortcut */}
+        <div className="md:hidden relative dropdown-container">
+          <button
+            onClick={() => setShowLocationMenu(!showLocationMenu)}
+            className="flex items-center gap-1.5 p-1.5 bg-primary/5 text-primary border border-primary/10 rounded-lg transition-colors"
+          >
+            <MapPin className="h-4 w-4" />
+            <span className="text-[10px] font-bold uppercase truncate max-w-[80px]">
+              {currentLocationName}
+            </span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${showLocationMenu ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showLocationMenu && (
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-border z-50 py-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="px-4 py-2 border-b border-border mb-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Switch Location</span>
+              </div>
+              <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                {locations.map((loc) => (
+                  <button
+                    key={loc.id}
+                    onClick={() => handleLocationSwitch(loc.id)}
+                    className={`w-full text-left px-4 py-3 text-[11px] font-bold flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                      String(loc.id) === String(user?.terminalId) ? 'text-primary bg-primary/5' : 'text-foreground'
+                    }`}
+                  >
+                    <span className="uppercase">{loc.name}</span>
+                    {String(loc.id) === String(user?.terminalId) && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* PWA Install Button (Mobile Only) */}
         <PWAInstallButton />
 
@@ -173,13 +209,36 @@ const Header = ({
           {showUserMenu && (
             <div 
               onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-border z-50 animate-in fade-in slide-in-from-top-1 duration-200 overflow-hidden"
+              className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-border z-50 animate-in fade-in slide-in-from-top-1 duration-200 overflow-hidden"
             >
               <div className="py-2.5 px-4 bg-slate-50/50 border-b border-border">
                 <p className="text-[13px] font-bold text-foreground truncate">{user?.name}</p>
                 <p className="text-[11px] text-text-muted truncate mt-0.5">{user?.email}</p>
+                <div className="mt-2 flex items-center gap-2 md:hidden text-primary">
+                  <MapPin className="h-3 w-3" />
+                  <span className="text-[10px] font-bold uppercase">{currentLocationName}</span>
+                </div>
               </div>
               <div className="p-1">
+                {/* Mobile Location Switching in User Menu */}
+                <div className="md:hidden border-b border-border mb-1 pb-1">
+                  <p className="px-3 py-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Select Location</p>
+                  <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                    {locations.map((loc) => (
+                      <button
+                        key={loc.id}
+                        onClick={() => handleLocationSwitch(loc.id)}
+                        className={`w-full text-left px-3 py-2 text-[11px] font-semibold flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                          String(loc.id) === String(user?.terminalId) ? 'text-primary bg-primary/5' : 'text-foreground'
+                        }`}
+                      >
+                        <span className="truncate">{loc.name}</span>
+                        {String(loc.id) === String(user?.terminalId) && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button 
                   onClick={() => toast.info("Profile feature coming soon")}
                   className="w-full text-left px-3 py-2 text-[13px] text-foreground hover:bg-slate-50 rounded-md flex items-center transition-colors"

@@ -118,7 +118,7 @@ const VehicleDetailsSection = ({
             required
           >
             <option value="">Select Vehicle Type</option>
-            <option value="Trailer">Trailer</option>
+            <option value="Trailer">Bed</option>
             <option value="Truck">Truck</option>
           </select>
         </div>
@@ -130,7 +130,7 @@ const VehicleDetailsSection = ({
           {safeRequestData.vehicle_type === "Trailer" && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                Trailer Size
+                Bed Size
               </label>
               <input
                 type="text"
@@ -148,7 +148,7 @@ const VehicleDetailsSection = ({
                   }))
                 }
                 className="w-full border rounded-md p-2"
-                placeholder="Enter trailer size"
+                placeholder="Enter bed size"
                 required
               />
             </div>
