@@ -30,8 +30,38 @@ import {
   TrendingUp,
   CreditCard,
   User,
+  Users,
 } from "lucide-react";
 import elogisolLogo from "../images/elogisol-logo.png";
+
+const pageAliases = {
+  "Admin Dashboard": ["Admin Dashboard", "Customer Dashboard", "Operations Dashboard", "Finance Dashboard", "Dashboard"],
+  "My Shipments": ["My Shipments", "Bookings", "Transport Requests"],
+  "Container Stage": ["Container Stage", "Trip History", "Container Details", "Admin Container Page"],
+  "VIN Survey": ["VIN Survey", "VIN Page", "VIN Details"],
+  "Bed Attach/Detach": ["Bed Attach Detach", "Bed Attach/Detach", "Bed Attachment"],
+  "Tyre Attach/Detach": ["Tire Attach/Detach", "Tire Attach Detach", "Tire Attachment", "Tyre Attach/Detach"],
+  "Job Order": ["Job Order"],
+  "Job Order Close": ["Job Order Close"],
+  "ASN Upload": ["ASN Upload", "ASN"],
+  "Vendor Master": ["Vendor Master", "Vendor Controller", "Vendors"],
+  "Fleet Equipment Master": ["Vehicle Master", "Fleet Equipment Master", "Vehicle Details"],
+  "Driver Master": ["Driver Master", "Drivers"],
+  "Tire Master": ["Tire Master", "Tyre Master"],
+  "Tire Position Master": ["Tire Position Master", "Tyre Position Master"],
+  "Bed Master": ["Bed Master"],
+  "Transport Reports": ["Transport Reports", "Reports"],
+  "Tyre Attachment Report": ["Tire Attachment Report", "Tire Report", "Tyre Attachment Report"],
+};
+
+const hasPageAccess = (user, itemName) => {
+  if (!user) return false;
+  if (user.role?.toLowerCase() === "admin") return true;
+  const pageNames = Array.isArray(user.pageNames) ? user.pageNames.map(p => p.toLowerCase()) : [];
+  const aliases = (pageAliases[itemName] || [itemName]).map(a => a.toLowerCase());
+  return aliases.some((alias) => pageNames.includes(alias));
+};
+
 export function CustomerSidebar({
   collapsed,
   toggleSidebar,
@@ -72,128 +102,57 @@ export function CustomerSidebar({
     {
       title: "Main",
       items: [
-        {
-          name: "Dashboard",
-          icon: Home,
-          path: "dashboard",
-          description: "Overview & Summary",
-        },
+        { name: "Admin Dashboard", icon: Home, path: "/admin-dashboard", description: "Summary & Overview" },
+        { name: "Users", icon: Users, path: "/admin/users", description: "Manage Users" },
       ],
     },
     {
       title: "Daily Tasks",
       items: [
-        {
-          name: "My Shipments",
-          icon: Truck,
-          path: "my-shipments",
-          description: "Track Deliveries",
-        },
-        {
-          name: "Container Stage",
-          icon: MapPinned,
-          path: "container-page",
-          description: "Manage Container Flow",
-        },
-        {
-          name: "VIN Survey",
-          icon: ScanSearch,
-          path: "vinpage",
-          description: "Vehicle Inspection Survey",
-        },
-        {
-          name: "Bed Attach Detach",
-          icon: Link2,
-          path: "bed-attachment",
-          description: "Link Bed to Vehicle",
-        },
-        {
-          name: "Tire Attach/Detach",
-          icon: Wrench,
-          path: "tire-attachment",
-          description: "Map Tyres to Positions",
-        },
-        {
-          name: "Job Order",
-          icon: PlusCircle,
-          path: "job-order",
-          description: "Start Trip & Advance",
-        },
-        {
-          name: "Job Order Close",
-          icon: CheckCircle,
-          path: "job-order-close",
-          description: "Close Trip & Settle",
-        },
+        { name: "Transport Requests", icon: ClipboardList, path: "/admin/transport-requests", description: "Manage Booking List" },
+        { name: "Edit Requests", icon: Edit3, path: "/admin/editrequest", description: "Update Booking Details" },
+        { name: "Trip Details Report", icon: History, path: "/admin/admincontainerpage", description: "View All Trips" },
+        { name: "Filter Trips", icon: Search, path: "/admin/filtered-transport-requests", description: "Find & Track Trips" },
+        { name: "My Shipments", icon: Truck, path: "/customer/my-shipments", description: "Track Deliveries" },
+        { name: "Container Stage", icon: MapPinned, path: "/customer/container-page", description: "Manage Container Flow" },
+        { name: "VIN Survey", icon: ScanSearch, path: "/customer/vinpage", description: "Vehicle Inspection Survey" },
+        { name: "Bed Attach/Detach", icon: Link2, path: "/customer/bed-attachment", description: "Link Bed to Vehicle" },
+        { name: "Tyre Attach/Detach", icon: Wrench, path: "/customer/tire-attachment", description: "Map Tyres to Positions" },
+        { name: "Job Order", icon: PlusCircle, path: "/customer/job-order", description: "Start Trip & Advance" },
+        { name: "Job Order Close", icon: CheckCircle, path: "/customer/job-order-close", description: "Close Trip & Settle" },
       ],
     },
     {
       title: "Documents",
       items: [
-        {
-          name: "ASN Upload",
-          icon: MessageSquare,
-          path: "ASN",
-          description: "Upload ASN Documents",
-        },
+        { name: "ASN Upload", icon: MessageSquare, path: "/customer/ASN", description: "Upload ASN Documents" },
       ],
     },
     {
       title: "Master",
       items: [
-        {
-          name: "Vendor Master",
-          icon: Building2,
-          path: "vendors",
-          description: "Manage Vendors",
-        },
-        {
-          name: "Vehicle Master",
-          icon: Truck,
-          path: "vehicle-master",
-          description: "Manage Vehicles",
-        },
-        {
-          name: "Driver Master",
-          icon: User,
-          path: "driver-master",
-          description: "Manage Drivers",
-        },
-        {
-          name: "Tire Master",
-          icon: CircleDot,
-          path: "tire-master",
-          description: "Manage Tyre Inventory",
-        },
-        {
-          name: "Tire Position Master",
-          icon: LayoutGrid,
-          path: "tire-position-master",
-          description: "Configure Tyre Positions",
-        },
-        {
-          name: "Bed Master",
-          icon: Truck,
-          path: "bed-master",
-          description: "Manage All Beds",
-        },
+        { name: "Vendor Master", icon: Building2, path: "/customer/vendors", description: "Manage Vendors" },
+        { name: "Fleet Equipment Master", icon: Truck, path: "/customer/vehicle-master", description: "Manage Vehicles" },
+        { name: "Driver Master", icon: User, path: "/customer/driver-master", description: "Manage Drivers" },
+        { name: "Tire Master", icon: CircleDot, path: "/customer/tire-master", description: "Manage Tyre Inventory" },
+        { name: "Tire Position Master", icon: LayoutGrid, path: "/customer/tire-position-master", description: "Configure Tyre Positions" },
+        { name: "Bed Master", icon: Truck, path: "/customer/bed-master", description: "Manage All Beds" },
+        { name: "Email Configuration", icon: Mail, path: "/admin/email-config", description: "Configure SMTP" },
+      ],
+    },
+    {
+      title: "Payments",
+      items: [
+        { name: "Payment Receipts", icon: CreditCard, path: "/admin/payment-receipts", description: "Track Customer Payments" },
       ],
     },
     {
       title: "Reports",
       items: [
-        {
-          name: "Transport Reports",
-          icon: BarChart3,
-          path: "reports",
-          description: "View Transport Reports",
-        },
-        {
-          name: "Tire Attachment Report",
-          icon: FileText,
-          path: "tire-attachment-report",
-          description: "View Tyre Movement History",
-        },
+        { name: "Daily Advance Payments", icon: BarChart3, path: "/admin/daily-advance-payments", description: "Daily Payment Summary" },
+        { name: "Container Margin Report", icon: TrendingUp, path: "/admin/container-margin-report", description: "Trip Profitability" },
+        { name: "Tyre Attachment Report", icon: FileText, path: "/customer/tire-attachment-report", description: "View Tyre Movement History" },
+        { name: "Transport Reports", icon: BarChart3, path: "/customer/reports", description: "View Transport Reports" },
       ],
     },
   ];
@@ -227,9 +186,7 @@ export function CustomerSidebar({
 
   const handleNavigation = (path) => {
     setActivePage(path);
-    navigate(
-      path === "dashboard" ? "/customer-dashboard" : `/customer/${path}`
-    );
+    navigate(path);
     if (mobileMenuOpen) {
       toggleMobileMenu();
     }
@@ -311,24 +268,14 @@ export function CustomerSidebar({
               )}
               <div className="space-y-0.5">
                 {section.items.map((item) => {
-                  const hasAccess = (() => {
-                    if (!user) return false;
-                    if (user.role?.toLowerCase() === 'admin') return true;
-                    if (!user.pageNames) return false;
-                    if (user.pageNames.includes(item.name)) return true;
-                    if (item.name === 'Dashboard' && user.pageNames.includes('Admin Dashboard')) return true;
-                    if (item.name === 'Vehicle Master' && user.pageNames.includes('Fleet Equipment Master')) return true;
-                    if (item.name === 'Tyre Master' && user.pageNames.includes('Tire Master')) return true;
-                    if (item.name === 'Tyre Position Master' && user.pageNames.includes('Tire Position Master')) return true;
-                    return false;
-                  })();
+                  const hasAccess = hasPageAccess(user, item.name);
 
                   if (!hasAccess) return null;
 
                   return (
                     <div key={item.path} className="relative group/item">
                       <Link
-                        to={item.path === "dashboard" ? "/customer-dashboard" : `/customer/${item.path}`}
+                        to={item.path}
                         onClick={() => handleNavigation(item.path)}
                         className={`nav-link ${isActiveItem(item.path) ? "active" : ""} ${
                           collapsed ? "justify-center px-0" : ""
@@ -395,24 +342,14 @@ export function CustomerSidebar({
                   </div>
                   <div className="space-y-1">
                     {section.items.map((item) => {
-                      const hasAccess = (() => {
-                        if (!user) return false;
-                        if (user.role?.toLowerCase() === 'admin') return true;
-                        if (!user.pageNames) return false;
-                        if (user.pageNames.includes(item.name)) return true;
-                        if (item.name === 'Dashboard' && user.pageNames.includes('Admin Dashboard')) return true;
-                        if (item.name === 'Vehicle Master' && user.pageNames.includes('Fleet Equipment Master')) return true;
-                        if (item.name === 'Tyre Master' && user.pageNames.includes('Tire Master')) return true;
-                        if (item.name === 'Tyre Position Master' && user.pageNames.includes('Tire Position Master')) return true;
-                        return false;
-                      })();
+                      const hasAccess = hasPageAccess(user, item.name);
 
                       if (!hasAccess) return null;
 
                       return (
                         <Link
                           key={item.path}
-                          to={item.path === "dashboard" ? "/customer-dashboard" : `/customer/${item.path}`}
+                          to={item.path}
                           onClick={() => handleNavigation(item.path)}
                           className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                             isActiveItem(item.path)

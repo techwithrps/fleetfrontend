@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useAuth } from "../contexts/AuthContext";
 import { bedAPI, bedAttachmentAPI, equipmentAPI } from "../utils/Api";
 
 const BedAttachment = () => {
+  const { user } = useAuth();
   const [equipment, setEquipment] = useState([]);
   const [beds, setBeds] = useState([]);
   const [attachments, setAttachments] = useState([]);
@@ -47,20 +49,28 @@ const BedAttachment = () => {
   };
 
   const loadData = async () => {
-    try {
-      const [equipRes, bedRes] = await Promise.all([
-        equipmentAPI.getAllEquipment(),
-        bedAPI.getAllBeds(),
-      ]);
-      if (equipRes.success) {
-        const filtered = (equipRes.data || []).filter(
-          (eq) => String(eq.BED_CHANGEABLE || "").toUpperCase() === "Y"
-        );
-        setEquipment(filtered);
-      }
-      if (bedRes.success) setBeds(bedRes.data || []);
-    } catch (error) {
-      toast.error(error.message || "Failed to load dropdowns");
+    const results = await Promise.allSettled([
+      equipmentAPI.getAllEquipment(),
+      bedAPI.getAllBeds(),
+    ]);
+    const [equipRes, bedRes] = results;
+
+    if (equipRes.status === "fulfilled" && equipRes.value.success) {
+      const filtered = (equipRes.value.data || []).filter(
+        (eq) => String(eq.BED_CHANGEABLE || "").toUpperCase() === "Y"
+      );
+      setEquipment(filtered);
+    }
+
+    if (bedRes.status === "fulfilled" && bedRes.value.success) {
+      setBeds(bedRes.value.data || []);
+    }
+
+    const failed = [];
+    if (equipRes.status === "rejected") failed.push("vehicles");
+    if (bedRes.status === "rejected") failed.push("beds");
+    if (failed.length > 0) {
+      toast.error(`Failed to load ${failed.join(", ")} dropdowns`);
     }
   };
 
@@ -91,6 +101,16 @@ const BedAttachment = () => {
   }, [selectedEquipmentId]);
 
   const handleAttach = async () => {
+    const selectedTerminalId =
+      user?.terminalId && String(user.terminalId).toUpperCase() !== "ALL"
+        ? Number(user.terminalId)
+        : null;
+
+    if (!selectedTerminalId) {
+      toast.error("Please select a specific location first");
+      return;
+    }
+
     if (!selectedEquipmentId || !selectedBedId) {
       toast.error("Select vehicle and bed");
       return;
@@ -99,6 +119,7 @@ const BedAttachment = () => {
       const response = await bedAttachmentAPI.attachBed({
         equipment_id: selectedEquipmentId,
         bed_id: selectedBedId,
+        terminal_id: selectedTerminalId,
         remarks,
       });
       if (response.success) {

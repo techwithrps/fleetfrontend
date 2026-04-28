@@ -1,6 +1,7 @@
 import React from "react";
 import LocationSearchInput from "./LocationSearchInput";
 import CustomerSearchInput from "../dashboard/CustomerSearchinput";
+import { toast } from "react-toastify";
 
 const LocationsCargoSection = ({
   safeRequestData,
@@ -33,6 +34,42 @@ const LocationsCargoSection = ({
 
   const handleCheckboxChange = (e) => {
     setUseOpenStreetMap(e.target.checked);
+  };
+
+  const normalizeLocation = (value) => String(value || "").trim().toLowerCase();
+
+  const handlePickupChange = (value) => {
+    const nextPickup = String(value || "").trim();
+    const currentDelivery = String(safeRequestData.delivery_location || "").trim();
+    if (
+      nextPickup &&
+      currentDelivery &&
+      normalizeLocation(nextPickup) === normalizeLocation(currentDelivery)
+    ) {
+      toast.error("Pickup and delivery location cannot be same.");
+      return;
+    }
+    setRequestData((prev) => ({
+      ...prev,
+      pickup_location: nextPickup,
+    }));
+  };
+
+  const handleDeliveryChange = (value) => {
+    const nextDelivery = String(value || "").trim();
+    const currentPickup = String(safeRequestData.pickup_location || "").trim();
+    if (
+      nextDelivery &&
+      currentPickup &&
+      normalizeLocation(nextDelivery) === normalizeLocation(currentPickup)
+    ) {
+      toast.error("Pickup and delivery location cannot be same.");
+      return;
+    }
+    setRequestData((prev) => ({
+      ...prev,
+      delivery_location: nextDelivery,
+    }));
   };
 
   return (
@@ -82,12 +119,7 @@ const LocationsCargoSection = ({
           </label>
           <LocationSearchInput
             value={safeRequestData.pickup_location}
-            onChange={(value) =>
-              setRequestData((prev) => ({
-                ...prev,
-                pickup_location: value,
-              }))
-            }
+            onChange={handlePickupChange}
             placeholder="Enter pickup location"
             useOpenStreetMap={useOpenStreetMap}
           />
@@ -116,12 +148,7 @@ const LocationsCargoSection = ({
           </label>
           <LocationSearchInput
             value={safeRequestData.delivery_location}
-            onChange={(value) =>
-              setRequestData((prev) => ({
-                ...prev,
-                delivery_location: value,
-              }))
-            }
+            onChange={handleDeliveryChange}
             placeholder="Enter delivery location"
             useOpenStreetMap={useOpenStreetMap}
           />

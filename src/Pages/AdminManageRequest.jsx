@@ -375,12 +375,24 @@ const AdminManageRequest = () => {
     if (!selectedRequest) return;
     setIsSubmitting(true);
     try {
+      const pickupLocation = String(selectedRequest.pickup_location || "").trim();
+      const deliveryLocation = String(selectedRequest.delivery_location || "").trim();
+      if (!pickupLocation || !deliveryLocation) {
+        toast.error("Pickup and delivery location are required.");
+        return;
+      }
+      if (pickupLocation.toLowerCase() === deliveryLocation.toLowerCase()) {
+        toast.error("Pickup and delivery location cannot be same.");
+        return;
+      }
       const formatTimeForDatabase = (timeString) => {
         if (!timeString) return null;
         return `${timeString.trim()}:00`;
       };
       const formData = {
         ...selectedRequest,
+        pickup_location: pickupLocation,
+        delivery_location: deliveryLocation,
         service_type: JSON.stringify(selectedRequest.service_type || []),
         service_prices: JSON.stringify(selectedRequest.service_prices || {}),
         expected_pickup_time: formatTimeForDatabase(selectedRequest.expected_pickup_time),

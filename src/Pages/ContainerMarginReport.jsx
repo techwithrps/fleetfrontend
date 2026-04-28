@@ -109,6 +109,11 @@ export default function ContainerMarginReport() {
       if (toDate) params.to_date = toDate;
 
       const response = await api.get("/transport-requests/filtered", { params });
+      if (!response?.data?.success) {
+        setReports([]);
+        toast.error("Failed to load container margin report");
+        return;
+      }
       const containerReports = [];
 
       await Promise.all(
@@ -120,11 +125,16 @@ export default function ContainerMarginReport() {
           try {
             if (transporterCache.has(shipment.id)) {
               transporterDetails = transporterCache.get(shipment.id);
+              containerNumbers = transporterDetails
+                .map((t) => t.container_no || t.CONTAINER_NO)
+                .filter(Boolean);
             } else {
               const transporterResponse = await transporterAPI.getTransporterByRequestId(shipment.id);
               if (transporterResponse.success) {
                 const details = Array.isArray(transporterResponse.data) ? transporterResponse.data : [transporterResponse.data];
-                containerNumbers = details.map((t) => t.container_no || "N/A").filter(Boolean);
+                containerNumbers = details
+                  .map((t) => t.container_no || t.CONTAINER_NO)
+                  .filter(Boolean);
                 const vehicleMap = new Map();
                 const uniqueVehicles = [];
                 details.forEach((detail) => {
@@ -139,6 +149,15 @@ export default function ContainerMarginReport() {
             }
             vehicleCharges = calculateRequestTotalAmount(transporterDetails);
           } catch (error) {}
+
+          if (containerNumbers.length === 0) {
+            const fallbackContainer =
+              shipment.container_no ||
+              shipment.CONTAINER_NO ||
+              shipment.container_number ||
+              shipment.CONTAINER_NUMBER;
+            containerNumbers = fallbackContainer ? [fallbackContainer] : ["N/A"];
+          }
 
           const transactionData = await fetchTransactionData(shipment.id);
           const totalPaid = transactionData ? transactionData.reduce((sum, tx) => sum + parseFloat(tx.total_paid || 0), 0) : 0;
@@ -173,6 +192,10 @@ export default function ContainerMarginReport() {
       setLoading(false);
     }
   }, [shipaNo, requestId, containerNo, date, fromDate, toDate, transporterCache, calculateRequestTotalAmount, fetchTransactionData]);
+
+  useEffect(() => {
+    fetchFilteredRequests();
+  }, []);
 
   const exportToExcel = useCallback(() => {
     try {
@@ -273,7 +296,7 @@ export default function ContainerMarginReport() {
                 <label className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-1">Interval End</label>
                 <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="input-clean w-full py-2 text-[11px]" />
               </div>
-              <button onClick={() => { if (!shipaNo && !requestId && !containerNo && !date && !fromDate && !toDate) toast.info("Parameters required"); else fetchFilteredRequests(); }} className="p-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark shadow-lg shadow-primary/20">
+              <button onClick={() => fetchFilteredRequests()} className="p-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark shadow-lg shadow-primary/20">
                 <Search className="w-4 h-4" />
               </button>
             </div>

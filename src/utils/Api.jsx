@@ -1016,7 +1016,26 @@ export const tireAttachmentAPI = {
   },
   attachTire: async (payload) => {
     try {
-      const response = await api.post("/tire-attachments/attach", payload);
+      const normalizedPayload = {
+        ...payload,
+        location_id:
+          payload?.location_id === null || payload?.location_id === undefined || payload?.location_id === ""
+            ? null
+            : payload.location_id === "ALL"
+              ? null
+              : Number(payload.location_id),
+        equipment_id:
+          payload?.equipment_id === null || payload?.equipment_id === undefined || payload?.equipment_id === ""
+            ? null
+            : Number(payload.equipment_id),
+        bed_id:
+          payload?.bed_id === null || payload?.bed_id === undefined || payload?.bed_id === ""
+            ? null
+            : Number(payload.bed_id),
+        tire_id: Number(payload?.tire_id),
+        position_id: Number(payload?.position_id),
+      };
+      const response = await api.post("/tire-attachments/attach", normalizedPayload);
       return response.data;
     } catch (error) {
       console.error("Error attaching tire:", error);
@@ -1033,6 +1052,62 @@ export const tireAttachmentAPI = {
     } catch (error) {
       console.error("Error detaching tire:", error);
       throw error.response?.data || error.message;
+    }
+  },
+  detachTiresBulk: async (attachmentIds = [], payload = {}) => {
+    try {
+      const normalizedIds = attachmentIds
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id));
+      const response = await api.put("/tire-attachments/detach-bulk", {
+        attachment_ids: normalizedIds,
+        ...payload,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error bulk detaching tires:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+};
+
+export const reportMasterAPI = {
+  getAllSummary: async () => {
+    try {
+      const response = await api.get("/report-master/summary");
+      return response.data;
+    } catch (error) {
+      const statusCode = error?.response?.status;
+      const routeNotFound =
+        statusCode === 404 &&
+        String(error?.response?.data?.message || "")
+          .toLowerCase()
+          .includes("route not found");
+      if (!routeNotFound) {
+        console.error("Error fetching report summary:", error);
+        throw error.response?.data || error.message;
+      }
+      const fallbackResponse = await api.get("/report-master");
+      return fallbackResponse.data;
+    }
+  },
+  getEntitySummary: async (entity) => {
+    try {
+      const response = await api.get(`/report-master/summary/${entity}`);
+      return response.data;
+    } catch (error) {
+      const statusCode = error?.response?.status;
+      const routeNotFound =
+        statusCode === 404 &&
+        String(error?.response?.data?.message || "")
+          .toLowerCase()
+          .includes("route not found");
+      if (!routeNotFound) {
+        console.error("Error fetching entity summary:", error);
+        throw error.response?.data || error.message;
+      }
+      const fallbackResponse = await api.get(`/report-master/${entity}`);
+      return fallbackResponse.data;
     }
   },
 };

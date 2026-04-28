@@ -246,69 +246,117 @@ const TireAttachmentReport = () => {
                 <tr className="bg-white border-b border-border">
                   <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">ID</th>
                   <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Vehicle/Bed</th>
-                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Tire Number</th>
-                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Tire Position</th>
-                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Attach Date</th>
-                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Detach Date</th>
-                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest text-center">Status</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Attached Tyres</th>
+                  <th className="px-6 py-4 text-[9px] font-bold text-text-muted uppercase tracking-widest">Recent Activity</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {filteredRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center gap-3 opacity-30">
-                        <AlertCircle className="w-10 h-10" />
-                        <p className="text-[11px] font-bold uppercase tracking-widest">No History Found</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRows.map((row, index) => {
+                {(() => {
+                  const groups = filteredRows.reduce((acc, row) => {
                     const isBed = String(row.ATTACH_FOR || "").toUpperCase() === "BED";
-                    const position = positionMap[String(row.POSITION_ID)] || {};
+                    const id = isBed ? row.BED_ID : row.EQUIPMENT_ID;
+                    const type = isBed ? "Bed" : "Vehicle";
+                    const key = `${type}_${id}`;
+                    if (!acc[key]) {
+                      acc[key] = {
+                        key,
+                        type,
+                        id,
+                        name: isBed ? (bedMap[String(id)]?.BED_NO || id) : (equipmentMap[String(id)]?.EQUIPMENT_NO || id),
+                        items: []
+                      };
+                    }
+                    acc[key].items.push(row);
+                    return acc;
+                  }, {});
+
+                  const groupList = Object.values(groups);
+                  if (groupList.length === 0) {
                     return (
-                      <tr key={index} className="hover:bg-slate-50/40 transition-colors group">
-                        <td className="px-6 py-4 text-[11px] font-bold text-slate-400">
-                          {String(index + 1).padStart(2, '0')}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-[12px] font-bold text-foreground uppercase tracking-tight">
-                              {isBed ? (bedMap[String(row.BED_ID)]?.BED_NO || row.BED_ID || "-") : (equipmentMap[String(row.EQUIPMENT_ID)]?.EQUIPMENT_NO || row.EQUIPMENT_ID || "-")}
-                            </span>
-                            <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isBed ? 'text-indigo-500' : 'text-primary/70'}`}>
-                              {isBed ? 'Bed' : 'Vehicle'}
-                            </span>
+                      <tr>
+                        <td colSpan={4} className="px-6 py-20 text-center">
+                          <div className="flex flex-col items-center gap-3 opacity-30">
+                            <AlertCircle className="w-10 h-10" />
+                            <p className="text-[11px] font-bold uppercase tracking-widest">No History Found</p>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-bold text-foreground uppercase">{tireMap[String(row.TIRE_ID)]?.TIRE_NO || row.TIRE_ID || "N/A"}</span>
-                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-tighter mt-0.5">Asset ID: {row.TIRE_ID}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-bold text-primary uppercase tracking-widest">{position.POSITION_CODE || "N/A"}</span>
-                            <span className="text-[9px] font-medium text-text-muted uppercase truncate max-w-[120px]">{position.POSITION_NAME || ""}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-[11px] font-bold text-slate-600">
-                          {formatDateOnly(row.ATTACH_DATE)}
-                        </td>
-                        <td className="px-6 py-4 text-[11px] font-bold text-slate-400">
-                          {formatDateOnly(row.DETACH_DATE) || "ACTIVE"}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border shadow-sm ${String(row.ATTACH_STATUS || "").toUpperCase() === 'DETACHED' ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                            {String(row.ATTACH_STATUS || "ATTACHED").toUpperCase()}
-                          </span>
                         </td>
                       </tr>
                     );
-                  })
-                )}
+                  }
+
+                  return groupList.map((group, index) => (
+                    <tr key={group.key} className="hover:bg-slate-50/40 transition-colors group">
+                      <td className="px-6 py-4 text-[11px] font-bold text-slate-400">
+                        {String(index + 1).padStart(2, '0')}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-[12px] font-bold text-foreground uppercase tracking-tight">
+                            {group.name}
+                          </span>
+                          <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${group.type === 'Bed' ? 'text-indigo-500' : 'text-primary/70'}`}>
+                            {group.type}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-3">
+                          {group.items.map((item, idx) => {
+                            const isDetached = String(item.ATTACH_STATUS || "").toUpperCase() === "DETACHED";
+                            return (
+                              <div key={idx} className={`p-3 rounded-xl border ${isDetached ? 'bg-slate-50 border-slate-200 opacity-75' : 'bg-emerald-50/50 border-emerald-100 shadow-sm'} min-w-[180px]`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[11px] font-black text-slate-900">
+                                    {tireMap[String(item.TIRE_ID)]?.TIRE_NO || item.TIRE_ID}
+                                  </span>
+                                  <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${isDetached ? 'bg-slate-200 text-slate-500' : 'bg-emerald-500 text-white'}`}>
+                                    {isDetached ? 'Detached' : 'Active'}
+                                  </span>
+                                </div>
+                                
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Pos:</span>
+                                    <span className="text-[10px] font-bold text-primary">{positionMap[String(item.POSITION_ID)]?.POSITION_CODE || "N/A"}</span>
+                                  </div>
+                                  
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Attached:</span>
+                                    <span className="text-[9px] font-bold text-slate-600">{formatDateOnly(item.ATTACH_DATE)}</span>
+                                  </div>
+
+                                  {isDetached && (
+                                    <div className="flex items-center justify-between border-t border-slate-100 pt-1 mt-1">
+                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Detached:</span>
+                                      <span className="text-[9px] font-bold text-rose-500">{formatDateOnly(item.DETACH_DATE)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          {(() => {
+                            const last = group.items[0]; // Recent first
+                            return (
+                              <>
+                                <div className="text-[10px] text-slate-500">
+                                  <span className="font-bold">Last Action:</span> {last.ATTACH_STATUS}
+                                </div>
+                                <div className="text-[9px] text-slate-400">
+                                  {formatDateOnly(last.ATTACH_DATE)}
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>

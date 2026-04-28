@@ -232,6 +232,16 @@ export default function CustomerDashboard({
       }
       const formatTimeForDatabase = (timeString) =>
         timeString ? `${timeString.trim()}:00` : null;
+      const pickupLocation = String(requestData.pickup_location || "").trim();
+      const deliveryLocation = String(requestData.delivery_location || "").trim();
+      if (!pickupLocation || !deliveryLocation) {
+        toast.error("Pickup and delivery location are required");
+        return;
+      }
+      if (pickupLocation.toLowerCase() === deliveryLocation.toLowerCase()) {
+        toast.error("Pickup and delivery location cannot be the same");
+        return;
+      }
       const formData = {
         SHIPA_NO: requestData.SHIPA_NO?.trim() || "",
         consignee: requestData.consignee.trim(),
@@ -240,9 +250,9 @@ export default function CustomerDashboard({
         vehicle_size: requestData.vehicle_size,
         vehicle_status: requestData.vehicle_status,
         no_of_vehicles: parseInt(requestData.no_of_vehicles) || 1,
-        pickup_location: requestData.pickup_location.trim(),
+        pickup_location: pickupLocation,
         stuffing_location: requestData.stuffing_location.trim(),
-        delivery_location: requestData.delivery_location.trim(),
+        delivery_location: deliveryLocation,
         commodity: requestData.commodity.trim(),
         cargo_type: requestData.cargo_type,
         cargo_weight: parseFloat(requestData.cargo_weight) || 0,

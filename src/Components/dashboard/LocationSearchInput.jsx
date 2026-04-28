@@ -22,6 +22,7 @@ const LocationSearchInput = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const wrapperRef = useRef(null);
+  const selectingSuggestionRef = useRef(false);
 
   useEffect(() => {
     setInputValue(value);
@@ -88,6 +89,10 @@ const LocationSearchInput = ({
 
   // ✅ Handle pressing Enter or leaving input field
   const handleInputConfirm = () => {
+    if (selectingSuggestionRef.current) {
+      selectingSuggestionRef.current = false;
+      return;
+    }
     if (inputValue.trim()) {
       onChange(inputValue.trim()); // Send free text upward
       setSuggestions([]);
@@ -144,6 +149,10 @@ const LocationSearchInput = ({
                   ? suggestion.place_id
                   : suggestion.LOCATION_REF_ID
               }
+              onMouseDown={(e) => {
+                e.preventDefault();
+                selectingSuggestionRef.current = true;
+              }}
               onClick={() => handleSuggestionClick(suggestion)}
               className="cursor-pointer"
             >

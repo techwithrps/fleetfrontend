@@ -45,6 +45,7 @@ import TireAttachment from "./Pages/TireAttachment";
 import JobOrder from "./Pages/JobOrder";
 import JobOrderClose from "./Pages/JobOrderClose";
 import TireAttachmentReport from "./Pages/TireAttachmentReport";
+import ReportMaster from "./Pages/ReportMaster";
 import LogoutModal from "./Components/LogoutModal";
 
 const DashboardLayout = ({ children }) => {
@@ -169,7 +170,7 @@ function App() {
           <Route
             path="/admin/vendor-controller"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Vendor Master">
                 <DashboardLayout>
                   <VendorController />
                 </DashboardLayout>
@@ -189,7 +190,7 @@ function App() {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Users">
                 <DashboardLayout>
                   <AdminUsers />
                 </DashboardLayout>
@@ -199,7 +200,7 @@ function App() {
           <Route
             path="/admin/editrequest"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Edit Requests">
                 <DashboardLayout>
                   <AdminManageRequest />
                 </DashboardLayout>
@@ -219,7 +220,7 @@ function App() {
           <Route
             path="/admin/admincontainerpage"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Trip Details Report">
                 <DashboardLayout>
                   <ContainerAssignmentDashboard />
                 </DashboardLayout>
@@ -229,7 +230,7 @@ function App() {
           <Route
             path="/admin/transport-requests"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Transport Requests">
                 <DashboardLayout>
                   <AdminTransportRequests />
                 </DashboardLayout>
@@ -239,7 +240,7 @@ function App() {
           <Route
             path="/admin/filtered-transport-requests"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Filter Trips">
                 <DashboardLayout>
                   <AdminFilteredTransportRequests />
                 </DashboardLayout>
@@ -249,7 +250,7 @@ function App() {
           <Route
             path="/admin/daily-advance-payments"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Daily Advance Payments">
                 <DashboardLayout>
                   <DailyAdvancePaymentsReport />
                 </DashboardLayout>
@@ -259,7 +260,7 @@ function App() {
           <Route
             path="/admin/container-margin-report"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Container Margin Report">
                 <DashboardLayout>
                   <ContainerMarginReport />
                 </DashboardLayout>
@@ -269,7 +270,7 @@ function App() {
           <Route
             path="/admin/payment-receipts"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Payment Receipts">
                 <AdminLayout>
                   <PaymentReceipts />
                 </AdminLayout>
@@ -279,7 +280,7 @@ function App() {
           <Route
             path="/admin/email-config"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Email Configuration">
                 <DashboardLayout>
                   <EmailConfig />
                 </DashboardLayout>
@@ -329,7 +330,7 @@ function App() {
           <Route
             path="/admin/tire-position-master"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Tire Position Master">
                 <DashboardLayout>
                   <TirePositionMaster />
                 </DashboardLayout>
@@ -349,7 +350,7 @@ function App() {
           <Route
             path="/admin/bed-attachment"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Bed Attach/Detach">
                 <DashboardLayout>
                   <BedAttachment />
                 </DashboardLayout>
@@ -359,7 +360,7 @@ function App() {
           <Route
             path="/admin/tire-attachment"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Tyre Attach/Detach">
                 <DashboardLayout>
                   <TireAttachment />
                 </DashboardLayout>
@@ -369,7 +370,7 @@ function App() {
           <Route
             path="/admin/tire-attachment-report"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Tyre Attachment Report">
                 <DashboardLayout>
                   <TireAttachmentReport />
                 </DashboardLayout>
@@ -377,9 +378,19 @@ function App() {
             }
           />
           <Route
+            path="/admin/report-master"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <DashboardLayout>
+                  <ReportMaster />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/job-order"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]} pageName="Job order">
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Job Order">
                 <DashboardLayout>
                   <JobOrder />
                 </DashboardLayout>
@@ -389,7 +400,7 @@ function App() {
           <Route
             path="/admin/job-order-close"
             element={
-              <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Job Order Close">
                 <DashboardLayout>
                   <JobOrderClose />
                 </DashboardLayout>
@@ -430,7 +441,7 @@ function App() {
           <Route
             path="/customer/ASN"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="ASN Upload">
                 <DashboardLayout>
                   <ASNManagement></ASNManagement>
                 </DashboardLayout>
@@ -440,7 +451,7 @@ function App() {
           <Route
             path="/customer/my-shipments" // Changed from "/my-shipments"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="My Shipments">
                 <DashboardLayout>
                   <ShipmentsPage />
                 </DashboardLayout>
@@ -450,7 +461,7 @@ function App() {
           <Route
             path="/customer/container-page" // Changed from "/my-shipments"
             element={
-              <ProtectedRoute allowedRoles={["Customer", "Admin"]}>
+              <ProtectedRoute allowedRoles={["Customer", "Admin"]} pageName="Container Stage">
                 <DashboardLayout>
                   <ContainerDetailsPage></ContainerDetailsPage>
                 </DashboardLayout>
@@ -470,7 +481,7 @@ function App() {
           <Route
             path="/customer/vendors"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Vendor Master">
                 <DashboardLayout>
                   <VendorDetails />
                 </DashboardLayout>
@@ -480,7 +491,7 @@ function App() {
           <Route
             path="/customer/equipments"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Fleet Equipment Master">
                 <DashboardLayout>
                   <EquipmentDetails></EquipmentDetails>
                 </DashboardLayout>
@@ -500,7 +511,7 @@ function App() {
           <Route
             path="/customer/drivers"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Driver Master">
                 <DashboardLayout>
                   <DriverDetails />
                 </DashboardLayout>
@@ -520,7 +531,7 @@ function App() {
           <Route
             path="/customer/tire-master"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Tire Master">
                 <DashboardLayout>
                   <TireMaster />
                 </DashboardLayout>
@@ -530,7 +541,7 @@ function App() {
           <Route
             path="/customer/tire-position-master"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Tire Position Master">
                 <DashboardLayout>
                   <TirePositionMaster />
                 </DashboardLayout>
@@ -540,7 +551,7 @@ function App() {
           <Route
             path="/customer/bed-master"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Bed Master">
                 <DashboardLayout>
                   <BedMaster />
                 </DashboardLayout>
@@ -550,7 +561,7 @@ function App() {
           <Route
             path="/customer/bed-attachment"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Bed Attach/Detach">
                 <DashboardLayout>
                   <BedAttachment />
                 </DashboardLayout>
@@ -560,7 +571,7 @@ function App() {
           <Route
             path="/customer/tire-attachment"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Tyre Attach/Detach">
                 <DashboardLayout>
                   <TireAttachment />
                 </DashboardLayout>
@@ -570,7 +581,7 @@ function App() {
           <Route
             path="/customer/tire-attachment-report"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Tyre Attachment Report">
                 <DashboardLayout>
                   <TireAttachmentReport />
                 </DashboardLayout>
@@ -578,9 +589,39 @@ function App() {
             }
           />
           <Route
-            path="/customer/job-order"
+            path="/customer/report-master"
             element={
               <ProtectedRoute allowedRoles={["Customer"]}>
+                <DashboardLayout>
+                  <ReportMaster />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/operations/report-master"
+            element={
+              <ProtectedRoute allowedRoles={["Customer"]}>
+                <DashboardLayout>
+                  <ReportMaster />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/finance/report-master"
+            element={
+              <ProtectedRoute allowedRoles={["Customer"]}>
+                <DashboardLayout>
+                  <ReportMaster />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/job-order"
+            element={
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Job Order">
                 <DashboardLayout>
                   <JobOrder />
                 </DashboardLayout>
@@ -590,7 +631,7 @@ function App() {
           <Route
             path="/customer/job-order-close"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Job Order Close">
                 <DashboardLayout>
                   <JobOrderClose />
                 </DashboardLayout>
@@ -600,7 +641,7 @@ function App() {
           <Route
             path="/customer/reports"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Transport Reports">
                 <DashboardLayout>
                   <TransportReports></TransportReports>
                 </DashboardLayout>
@@ -610,7 +651,7 @@ function App() {
           <Route
             path="/customer/vinpage"
             element={
-              <ProtectedRoute allowedRoles={["Customer"]}>
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="VIN Survey">
                 <DashboardLayout>
                   <Vindetails></Vindetails>
                 </DashboardLayout>

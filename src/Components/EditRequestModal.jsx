@@ -160,6 +160,16 @@ export default function EditRequestModal({ request, onClose, onUpdate }) {
     setIsSubmitting(true);
 
     try {
+      const pickupLocation = String(formData.pickupLocation || "").trim();
+      const deliveryLocation = String(formData.handoverLocation || "").trim();
+      if (!pickupLocation || !deliveryLocation) {
+        toast.error("Pickup and delivery location are required.");
+        return;
+      }
+      if (pickupLocation.toLowerCase() === deliveryLocation.toLowerCase()) {
+        toast.error("Pickup and delivery location cannot be same.");
+        return;
+      }
       // Prepare data for submission
       const submitData = {
         consignee: formData.consignee,
@@ -169,9 +179,9 @@ export default function EditRequestModal({ request, onClose, onUpdate }) {
           formData.vehicleType === "Truck"
             ? formData.truckSize
             : formData.trailerSize,
-        pickup_location: formData.pickupLocation,
+        pickup_location: pickupLocation,
         stuffing_location: formData.stuffingLocation,
-        delivery_location: formData.handoverLocation,
+        delivery_location: deliveryLocation,
         commodity: formData.commodity,
         cargo_type: formData.cargoType,
         cargo_weight: formData.cargoWeight,

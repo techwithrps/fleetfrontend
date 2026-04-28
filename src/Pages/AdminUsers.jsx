@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import api, { userAPI } from "../utils/Api";
 import { useAuth } from "../contexts/AuthContext";
@@ -13,6 +13,7 @@ import {
   Lock, 
   Shield, 
   User, 
+  Check,
   CheckSquare,
   ShieldCheck,
   Activity,
@@ -209,6 +210,25 @@ const UserModal = ({ isOpen, onClose, onSubmit, user = null, isSubmitting = fals
 };
 
 // Access Modal for Permissions
+const PAGE_GROUPS = [
+  {
+    group: "MASTERS",
+    pages: ["Vendor Master", "Fleet Equipment Master", "Driver Master", "Tire Master", "Tire Position Master", "Bed Master"]
+  },
+  {
+    group: "TRANSACTIONS & OPERATIONS",
+    pages: ["Job Order", "Job Order Close", "Bed Attach/Detach", "Tyre Attach/Detach", "My Shipments", "Container Stage", "VIN Survey", "ASN Upload"]
+  },
+  {
+    group: "REQUESTS & TRACKING",
+    pages: ["Transport Requests", "Edit Requests", "Trip Details Report", "Filter Trips"]
+  },
+  {
+    group: "COMMERCIAL & REPORTS",
+    pages: ["Payment Receipts", "Daily Advance Payments", "Container Margin Report", "Tyre Attachment Report", "Transport Reports"]
+  }
+];
+
 const AccessModal = ({ isOpen, onClose, user }) => {
   const [locations, setLocations] = useState([]);
   const [pages, setPages] = useState([]);
@@ -228,8 +248,21 @@ const AccessModal = ({ isOpen, onClose, user }) => {
           api.get(`/access/user/${user.id}`)
         ]);
         
+        const allowedPages = [
+          "Transport Requests", "Edit Requests", 
+          "Trip Details Report", "Filter Trips", "My Shipments", "Container Stage", 
+          "VIN Survey", "Bed Attach/Detach", "Tyre Attach/Detach", "Job Order", 
+          "Job Order Close", "ASN Upload", "Vendor Master", "Fleet Equipment Master", 
+          "Driver Master", "Tire Master", "Tire Position Master", "Bed Master", 
+          "Payment Receipts", "Daily Advance Payments", 
+          "Container Margin Report", "Tyre Attachment Report", "Transport Reports"
+        ].map(p => p.toLowerCase());
+
         setLocations(locRes.data.data || []);
-        setPages(pageRes.data.data || []);
+        
+        const allPages = pageRes.data.data || [];
+        const filteredPages = allPages.filter(p => allowedPages.includes(p.PAGE_NAME?.toLowerCase()));
+        setPages(filteredPages);
         
         const initialSelections = accessRes.data.data || [];
         if (initialSelections.length > 0) {
@@ -309,6 +342,66 @@ const AccessModal = ({ isOpen, onClose, user }) => {
     }));
   };
 
+  const toggleGroupPermission = (configId, groupPageNames, type) => {
+    setConfigs(configs.map(c => {
+      if (c.id === configId) {
+        const groupPageIds = pages
+          .filter(p => groupPageNames.map(n => n.toLowerCase()).includes(p.PAGE_NAME?.toLowerCase()))
+          .map(p => Number(p.PAGE_ID));
+
+        const currentGroupPages = c.pages.filter(p => groupPageIds.includes(p.page_id));
+        const allHavePerm = groupPageIds.every(pid => {
+          const p = currentGroupPages.find(cp => cp.page_id === pid);
+          return p && p[`can_${type}`];
+        });
+        const targetState = !allHavePerm;
+
+        let nextPages = [...c.pages];
+        groupPageIds.forEach(pageId => {
+          const pageIdx = nextPages.findIndex(p => p.page_id === pageId);
+          if (pageIdx === -1) {
+            if (targetState) {
+              nextPages.push({ page_id: pageId, can_view: type === 'view', can_create: type === 'create', can_edit: type === 'edit' });
+            }
+          } else {
+            const p = nextPages[pageIdx];
+            nextPages[pageIdx] = { ...p, [`can_${type}`]: targetState };
+            if (!nextPages[pageIdx].can_view && !nextPages[pageIdx].can_create && !nextPages[pageIdx].can_edit) {
+              nextPages[pageIdx].cleanup = true;
+            }
+          }
+        });
+        nextPages = nextPages.filter(p => !p.cleanup);
+        return { ...c, pages: nextPages };
+      }
+      return c;
+    }));
+  };
+
+  const toggleRowFullAccess = (configId, pageId) => {
+    setConfigs(configs.map(c => {
+      if (c.id === configId) {
+        const pageIdx = c.pages.findIndex(p => p.page_id === pageId);
+        let nextPages = [...c.pages];
+        
+        if (pageIdx === -1) {
+          nextPages.push({ page_id: pageId, can_view: true, can_create: true, can_edit: true });
+        } else {
+          const p = nextPages[pageIdx];
+          const hasAll = p.can_view && p.can_create && p.can_edit;
+          
+          if (hasAll) {
+            nextPages = nextPages.filter((_, i) => i !== pageIdx);
+          } else {
+            nextPages[pageIdx] = { ...p, can_view: true, can_create: true, can_edit: true };
+          }
+        }
+        return { ...c, pages: nextPages };
+      }
+      return c;
+    }));
+  };
+
   const toggleLocation = (configId, locId) => {
     setConfigs(configs.map(c => {
       if (c.id === configId) {
@@ -354,17 +447,15 @@ const AccessModal = ({ isOpen, onClose, user }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
-      <div className="relative bg-white rounded-[40px] w-full max-w-5xl max-h-[90vh] shadow-2xl border border-white/40 overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-        <div className="bg-gradient-to-r from-slate-800 to-slate-950 p-8 text-white flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-black uppercase tracking-widest">Enforce Access Policy</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">User: {user?.name}</p>
-            </div>
-            <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/10">
-              <X size={24} />
-            </button>
+      <div className="relative bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="bg-slate-900 p-5 text-white flex-shrink-0 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold uppercase tracking-wider">Enforce Access Policy</h3>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">User: {user?.name}</p>
           </div>
+          <button onClick={onClose} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+            <X size={20} />
+          </button>
         </div>
 
         {loading ? (
@@ -373,15 +464,15 @@ const AccessModal = ({ isOpen, onClose, user }) => {
              <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Synchronizing Permissions Matrix...</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-slate-50/50">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-slate-50">
             {configs.map((config, index) => (
-              <div key={config.id} className="bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-100/50 overflow-hidden">
-                <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col lg:flex-row gap-8">
+              <div key={config.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row gap-4 items-start">
                   <div className="flex-1">
-                    <label className="block text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em]">
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">
                       Deployment Nodes (Group {index + 1})
                     </label>
-                    <div className="flex gap-2 flex-wrap max-h-40 overflow-y-auto custom-scrollbar pr-4">
+                    <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto custom-scrollbar pr-2">
                       {locations.map(loc => {
                         const locIdStr = String(loc.location_id);
                         const isSelectedHere = config.locs.includes(locIdStr);
@@ -391,12 +482,12 @@ const AccessModal = ({ isOpen, onClose, user }) => {
                           <button
                             key={loc.location_id}
                             onClick={() => toggleLocation(config.id, locIdStr)}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors border ${
                               isSelectedHere 
-                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                                ? 'bg-indigo-600 border-indigo-600 text-white' 
                                 : isSelectedElsewhere
-                                  ? 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
-                                  : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'
+                                  ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:text-indigo-600'
                             }`}
                           >
                             {loc.LOCATION_NAME}
@@ -406,8 +497,8 @@ const AccessModal = ({ isOpen, onClose, user }) => {
                     </div>
                   </div>
                   {configs.length > 1 && (
-                    <button onClick={() => removeConfigBlock(config.id)} className="p-3 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all self-start border border-rose-100">
-                      <Trash2 size={20} />
+                    <button onClick={() => removeConfigBlock(config.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200">
+                      <Trash2 size={18} />
                     </button>
                   )}
                 </div>
@@ -415,61 +506,115 @@ const AccessModal = ({ isOpen, onClose, user }) => {
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/30 border-b border-slate-100">
-                        <th className="text-left px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Registry Module</th>
-                        <th className="text-center py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 w-32">Read Access</th>
-                        <th className="text-center py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 w-32">Write Access</th>
-                        <th className="text-center py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 w-32">Edit Access</th>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Registry Module</th>
+                        <th className="text-center py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 w-24">Full Access</th>
+                        <th className="text-center py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 w-24">Read Access</th>
+                        <th className="text-center py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 w-24">Write Access</th>
+                        <th className="text-center py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 w-24">Edit Access</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {pages.map(page => {
-                        const pageEntry = config.pages.find(p => p.page_id === Number(page.PAGE_ID));
-                        const canView = !!pageEntry?.can_view;
-                        const canCreate = !!pageEntry?.can_create;
-                        const canEdit = !!pageEntry?.can_edit;
+                      {PAGE_GROUPS.map(({ group, pages: groupPageNames }) => {
+                        const pagesInGroup = pages.filter(p => groupPageNames.map(name => name.toLowerCase()).includes(p.PAGE_NAME?.toLowerCase()));
+                        if (pagesInGroup.length === 0) return null;
                         const hasNoLoc = config.locs.length === 0;
-
+                        
                         return (
-                          <tr key={page.PAGE_ID} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="px-8 py-4">
-                              <span className={`text-[12px] font-black uppercase tracking-tight ${hasNoLoc ? 'text-slate-300' : 'text-slate-800'}`}>{page.PAGE_NAME}</span>
-                              <span className="block text-[8px] text-slate-400 font-black uppercase tracking-widest mt-0.5">{page.MODULE_GROUP}</span>
-                            </td>
-                            <td className="py-4 text-center">
-                              <button
-                                disabled={hasNoLoc}
-                                onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'view')}
-                                className={`mx-auto w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-                                  canView ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-                                } ${hasNoLoc ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
-                              >
-                                {canView && <CheckSquare size={14} strokeWidth={3} />}
-                              </button>
-                            </td>
-                            <td className="py-4 text-center">
-                              <button
-                                disabled={hasNoLoc}
-                                onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'create')}
-                                className={`mx-auto w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-                                  canCreate ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-                                } ${hasNoLoc ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
-                              >
-                                {canCreate && <CheckSquare size={14} strokeWidth={3} />}
-                              </button>
-                            </td>
-                            <td className="py-4 text-center">
-                              <button
-                                disabled={hasNoLoc}
-                                onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'edit')}
-                                className={`mx-auto w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-                                  canEdit ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
-                                } ${hasNoLoc ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
-                              >
-                                {canEdit && <CheckSquare size={14} strokeWidth={3} />}
-                              </button>
-                            </td>
-                          </tr>
+                          <Fragment key={group}>
+                            <tr className="bg-indigo-50/30">
+                              <td colSpan="2" className="px-5 py-2 text-[10px] font-bold uppercase text-indigo-700 tracking-wider border-b border-indigo-100">{group}</td>
+                              <td className="py-2 text-center border-b border-indigo-100">
+                                <button
+                                  disabled={hasNoLoc}
+                                  onClick={() => toggleGroupPermission(config.id, groupPageNames, 'view')}
+                                  className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${hasNoLoc ? 'text-indigo-300 cursor-not-allowed' : 'text-indigo-600 hover:text-indigo-800'}`}
+                                >
+                                  Select All
+                                </button>
+                              </td>
+                              <td className="py-2 text-center border-b border-indigo-100">
+                                <button
+                                  disabled={hasNoLoc}
+                                  onClick={() => toggleGroupPermission(config.id, groupPageNames, 'create')}
+                                  className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${hasNoLoc ? 'text-indigo-300 cursor-not-allowed' : 'text-indigo-600 hover:text-indigo-800'}`}
+                                >
+                                  Select All
+                                </button>
+                              </td>
+                              <td className="py-2 text-center border-b border-indigo-100">
+                                <button
+                                  disabled={hasNoLoc}
+                                  onClick={() => toggleGroupPermission(config.id, groupPageNames, 'edit')}
+                                  className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${hasNoLoc ? 'text-indigo-300 cursor-not-allowed' : 'text-indigo-600 hover:text-indigo-800'}`}
+                                >
+                                  Select All
+                                </button>
+                              </td>
+                            </tr>
+                            {pagesInGroup.map(page => {
+                              const pageEntry = config.pages.find(p => p.page_id === Number(page.PAGE_ID));
+                              const canView = !!pageEntry?.can_view;
+                              const canCreate = !!pageEntry?.can_create;
+                              const canEdit = !!pageEntry?.can_edit;
+                              const hasNoLoc = config.locs.length === 0;
+
+                              const hasAll = canView && canCreate && canEdit;
+
+                              return (
+                                <tr key={page.PAGE_ID} className="group hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                                  <td className="px-5 py-2.5">
+                                    <span className={`text-xs font-semibold tracking-tight ${hasNoLoc ? 'text-slate-400' : 'text-slate-700'}`}>{page.PAGE_NAME}</span>
+                                  </td>
+                                  <td className="py-2.5 text-center bg-slate-50/50 border-x border-slate-100">
+                                    <button
+                                      disabled={hasNoLoc}
+                                      onClick={() => toggleRowFullAccess(config.id, Number(page.PAGE_ID))}
+                                      className={`mx-auto w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
+                                        hasAll ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-300 hover:border-slate-400'
+                                      } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                      title="Select All"
+                                    >
+                                      {hasAll && <Check size={12} strokeWidth={4} />}
+                                    </button>
+                                  </td>
+                                  <td className="py-2.5 text-center">
+                                    <button
+                                      disabled={hasNoLoc}
+                                      onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'view')}
+                                      className={`mx-auto w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
+                                        canView ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-300 hover:border-slate-400'
+                                      } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    >
+                                      {canView && <Check size={12} strokeWidth={4} />}
+                                    </button>
+                                  </td>
+                                  <td className="py-2.5 text-center">
+                                    <button
+                                      disabled={hasNoLoc}
+                                      onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'create')}
+                                      className={`mx-auto w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
+                                        canCreate ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-300 hover:border-slate-400'
+                                      } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    >
+                                      {canCreate && <Check size={12} strokeWidth={4} />}
+                                    </button>
+                                  </td>
+                                  <td className="py-2.5 text-center">
+                                    <button
+                                      disabled={hasNoLoc}
+                                      onClick={() => togglePermission(config.id, Number(page.PAGE_ID), 'edit')}
+                                      className={`mx-auto w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
+                                        canEdit ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-300 hover:border-slate-400'
+                                      } ${hasNoLoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    >
+                                      {canEdit && <Check size={12} strokeWidth={4} />}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </Fragment>
                         );
                       })}
                     </tbody>
@@ -480,27 +625,27 @@ const AccessModal = ({ isOpen, onClose, user }) => {
 
             <button
               onClick={addConfigBlock}
-              className="w-full py-10 border-2 border-dashed border-slate-200 rounded-[32px] text-slate-400 font-black uppercase text-[11px] tracking-[0.3em] hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-4 group"
+              className="w-full py-5 border border-dashed border-slate-300 rounded-xl text-slate-500 font-bold uppercase text-xs hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition-colors flex items-center justify-center gap-3 group"
             >
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all">
-                <Plus size={20} />
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                <Plus size={16} />
               </div>
-              ADD NEW PROTOCOL GROUP
+              Add New Protocol Group
             </button>
           </div>
         )}
 
-        <div className="p-10 border-t border-slate-200/60 bg-white flex gap-4 flex-shrink-0">
+        <div className="p-5 border-t border-slate-200 bg-white flex gap-3 flex-shrink-0 justify-end">
           <button
             onClick={onClose}
-            className="flex-1 h-14 rounded-2xl bg-slate-100 text-slate-500 font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+            className="px-6 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-semibold text-xs uppercase tracking-wide hover:bg-slate-200 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || configs.every(c => c.locs.length === 0)}
-            className="flex-[2] h-14 rounded-2xl bg-slate-900 text-white font-black text-[11px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 disabled:opacity-50"
+            className="px-8 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-xs uppercase tracking-wide hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             {saving ? "Deploying..." : "Enforce Access Policy"}
           </button>

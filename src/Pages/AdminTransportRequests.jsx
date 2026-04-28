@@ -263,29 +263,29 @@ export default function AdminTransportRequests() {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
+        <div className="overflow-x-auto pb-4 custom-scrollbar">
+          <table className="w-full min-w-[1300px]">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[200px]">
                   Request Details
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[220px]">
                   Customer
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[220px]">
                   Service & Vehicle
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[260px]">
                   Locations
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[200px]">
                   Pricing & Details
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[120px]">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[120px]">
                   Actions
                 </th>
               </tr>
@@ -298,8 +298,8 @@ export default function AdminTransportRequests() {
                 );
 
                 return (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={request.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-5 align-top">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Package className="h-5 w-5 text-blue-600" />
@@ -318,7 +318,7 @@ export default function AdminTransportRequests() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-5 align-top break-words">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
                           {request.customer_name}
@@ -334,7 +334,7 @@ export default function AdminTransportRequests() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-5 align-top">
                       <div>
                         <div className="text-sm font-medium text-gray-900 flex items-center">
                           <Truck className="h-4 w-4 mr-1" />
@@ -370,7 +370,7 @@ export default function AdminTransportRequests() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-5 align-top">
                       <div className="text-sm text-gray-900">
                         <div className="flex items-center mb-1">
                           <MapPin className="h-3 w-3 mr-1 text-green-600" />
@@ -401,7 +401,7 @@ export default function AdminTransportRequests() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-5 align-top break-words">
                       <div className="text-sm">
                         <div className="text-sm font-medium text-gray-900">
                           {formatCurrency(request.requested_price)}
@@ -441,7 +441,7 @@ export default function AdminTransportRequests() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-5 align-top whitespace-nowrap">
                       <span
                         className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
                           request.status
@@ -450,7 +450,7 @@ export default function AdminTransportRequests() {
                         {request.status || "pending"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-5 align-top whitespace-nowrap text-sm font-medium">
                       <div className="flex flex-col space-y-1">
                         <div className="flex space-x-2">
                           <button

@@ -18,16 +18,16 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
         const userRole = user.role?.toLowerCase();
         const effectiveRole = customerLikeRoles.has(userRole) ? "customer" : userRole;
         
-        let hasAccess = allowedRoles.length === 0 || 
-          allowedRoles.some(role => role.toLowerCase() === effectiveRole);
-
-        // Additional check for granular page access if pageName is provided
-        // Special Case: 'admin' role bypasses granular page checks
-        if (hasAccess && pageName && userRole !== 'admin') {
+        let hasAccess = false;
+        if (userRole === 'admin') {
+          hasAccess = true;
+        } else if (pageName) {
           const userPageNames = user.pageNames || [];
-          if (!userPageNames.includes(pageName)) {
-            hasAccess = false;
-          }
+          const pageNameLower = pageName.toLowerCase();
+          hasAccess = userPageNames.some(p => p.toLowerCase() === pageNameLower);
+        } else {
+          hasAccess = allowedRoles.length === 0 || 
+            allowedRoles.some(role => role.toLowerCase() === effectiveRole);
         }
 
         if (hasAccess) {
@@ -91,16 +91,17 @@ export const ProtectedRoute = ({ children, allowedRoles = [], pageName = null })
   // Final check for render
   const userRole = user.role?.toLowerCase();
   const effectiveRole = customerLikeRoles.has(userRole) ? "customer" : userRole;
-  let hasAccess = allowedRoles.length === 0 || 
-    allowedRoles.some(role => role.toLowerCase() === effectiveRole);
-
-  // Additional check for granular page access if pageName is provided
-  // Special Case: 'admin' role bypasses granular page checks
-  if (hasAccess && pageName && userRole !== 'admin') {
+  
+  let hasAccess = false;
+  if (userRole === 'admin') {
+    hasAccess = true;
+  } else if (pageName) {
     const userPageNames = user.pageNames || [];
-    if (!userPageNames.includes(pageName)) {
-      hasAccess = false;
-    }
+    const pageNameLower = pageName.toLowerCase();
+    hasAccess = userPageNames.some(p => p.toLowerCase() === pageNameLower);
+  } else {
+    hasAccess = allowedRoles.length === 0 || 
+      allowedRoles.some(role => role.toLowerCase() === effectiveRole);
   }
 
   if (!hasAccess) {

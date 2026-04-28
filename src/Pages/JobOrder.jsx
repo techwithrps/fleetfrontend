@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { jobOrderAPI, equipmentAPI, bedAPI, driverAPI } from "../utils/Api";
+import { useAuth } from "../contexts/AuthContext";
 
 const JobOrder = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [equipment, setEquipment] = useState([]);
   const [beds, setBeds] = useState([]);
@@ -34,17 +36,29 @@ const JobOrder = () => {
   });
 
   const loadDropdowns = async () => {
-    try {
-      const [equipRes, bedRes, driverRes] = await Promise.all([
-        equipmentAPI.getAllEquipment(),
-        bedAPI.getAllBeds(),
-        driverAPI.getAllDrivers(),
-      ]);
-      if (equipRes.success) setEquipment(equipRes.data || []);
-      if (bedRes.success) setBeds(bedRes.data || []);
-      if (driverRes.success) setDrivers(driverRes.data || []);
-    } catch (error) {
-      toast.error(error.message || "Failed to load dropdowns");
+    const results = await Promise.allSettled([
+      equipmentAPI.getAllEquipment(),
+      bedAPI.getAllBeds(),
+      driverAPI.getAllDrivers(),
+    ]);
+    const [equipRes, bedRes, driverRes] = results;
+
+    if (equipRes.status === "fulfilled" && equipRes.value.success) {
+      setEquipment(equipRes.value.data || []);
+    }
+    if (bedRes.status === "fulfilled" && bedRes.value.success) {
+      setBeds(bedRes.value.data || []);
+    }
+    if (driverRes.status === "fulfilled" && driverRes.value.success) {
+      setDrivers(driverRes.value.data || []);
+    }
+
+    const failed = [];
+    if (equipRes.status === "rejected") failed.push("vehicles");
+    if (bedRes.status === "rejected") failed.push("beds");
+    if (driverRes.status === "rejected") failed.push("drivers");
+    if (failed.length > 0) {
+      toast.error(`Failed to load ${failed.join(", ")} dropdowns`);
     }
   };
 
@@ -143,10 +157,19 @@ const JobOrder = () => {
       return;
     }
     try {
+      const selectedTerminalId =
+        user?.terminalId && String(user.terminalId).toUpperCase() !== "ALL"
+          ? Number(user.terminalId)
+          : null;
+      const payload = {
+        ...formData,
+        terminal_id: selectedTerminalId || formData.terminal_id || null,
+      };
+
       if (isEditing && selectedOrder) {
         const response = await jobOrderAPI.update(
           selectedOrder.JO_ID,
-          formData
+          payload
         );
         if (response.success) {
           toast.success("Job order updated");
@@ -156,7 +179,7 @@ const JobOrder = () => {
           toast.error(response.error || "Failed to update job order");
         }
       } else {
-        const response = await jobOrderAPI.create(formData);
+        const response = await jobOrderAPI.create(payload);
         if (response.success) {
           toast.success("Job order created");
           fetchOrders();
