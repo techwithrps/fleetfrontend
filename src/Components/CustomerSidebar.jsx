@@ -50,6 +50,7 @@ const pageAliases = {
   "Tire Master": ["Tire Master", "Tyre Master"],
   "Tire Position Master": ["Tire Position Master", "Tyre Position Master"],
   "Bed Master": ["Bed Master"],
+  "Item Master": ["Item Master"],
   "Transport Reports": ["Transport Reports", "Reports"],
   "Tyre Attachment Report": ["Tire Attachment Report", "Tire Report", "Tyre Attachment Report"],
 };
@@ -137,6 +138,7 @@ export function CustomerSidebar({
         { name: "Tire Master", icon: CircleDot, path: "/customer/tire-master", description: "Manage Tyre Inventory" },
         { name: "Tire Position Master", icon: LayoutGrid, path: "/customer/tire-position-master", description: "Configure Tyre Positions" },
         { name: "Bed Master", icon: Truck, path: "/customer/bed-master", description: "Manage All Beds" },
+        { name: "Item Master", icon: Package, path: "/customer/item-master", description: "Manage Inventory Items" },
         { name: "Email Configuration", icon: Mail, path: "/admin/email-config", description: "Configure SMTP" },
       ],
     },

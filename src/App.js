@@ -44,6 +44,7 @@ import TirePositionMaster from "./Pages/TirePositionMaster";
 import TireAttachment from "./Pages/TireAttachment";
 import JobOrder from "./Pages/JobOrder";
 import JobOrderClose from "./Pages/JobOrderClose";
+import ItemMaster from "./Pages/ItemMaster";
 import TireAttachmentReport from "./Pages/TireAttachmentReport";
 import ReportMaster from "./Pages/ReportMaster";
 import LogoutModal from "./Components/LogoutModal";
@@ -348,6 +349,16 @@ function App() {
             }
           />
           <Route
+            path="/admin/item-master"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]} pageName="Item Master">
+                <DashboardLayout>
+                  <ItemMaster />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/bed-attachment"
             element={
               <ProtectedRoute allowedRoles={["Admin"]} pageName="Bed Attach/Detach">
@@ -554,6 +565,16 @@ function App() {
               <ProtectedRoute allowedRoles={["Customer"]} pageName="Bed Master">
                 <DashboardLayout>
                   <BedMaster />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/item-master"
+            element={
+              <ProtectedRoute allowedRoles={["Customer"]} pageName="Item Master">
+                <DashboardLayout>
+                  <ItemMaster />
                 </DashboardLayout>
               </ProtectedRoute>
             }

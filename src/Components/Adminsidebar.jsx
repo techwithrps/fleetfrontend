@@ -33,6 +33,7 @@ import {
   MapPinned,
   ScanSearch,
   MessageSquare,
+  Package,
 } from "lucide-react";
 import elogisolLogo from "../images/elogisol-logo.png";
 
@@ -53,6 +54,7 @@ const pageAliases = {
   "Tire Master": ["Tire Master", "Tyre Master"],
   "Tire Position Master": ["Tire Position Master", "Tyre Position Master"],
   "Bed Master": ["Bed Master"],
+  "Item Master": ["Item Master"],
   "Email Configuration": ["Email Settings", "Email Configuration"],
   "Payment Receipts": ["Payment Receipts"],
   "Daily Advance Payments": ["Advance Report", "Daily Advance Payments"],
@@ -121,6 +123,7 @@ export function AdminSidebar({
         { name: "Tire Master", icon: CircleDot, path: "/admin/tire-master", description: "Manage Tire Stock" },
         { name: "Tire Position Master", icon: LayoutGrid, path: "/admin/tire-position-master", description: "Configure Wheel Slots" },
         { name: "Bed Master", icon: Truck, path: "/admin/bed-master", description: "Manage All Beds" },
+        { name: "Item Master", icon: Package, path: "/admin/item-master", description: "Manage Inventory Items" },
         { name: "Email Configuration", icon: Mail, path: "/admin/email-config", description: "Configure SMTP" },
       ],
     },
